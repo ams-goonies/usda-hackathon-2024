@@ -1,9 +1,12 @@
 import("shiny")
+import("dplyr")
 
 APP_DATA <- readRDS("./data/DATA_FAKE.rds")
 APP_TITLE <- "Ag Census Data Explorer"
 APP_TIME_RANGE <- ""
 APP_VERSION <- ""
+
+ag_census_api_key <- Sys.getenv("AG_CENSUS_API_KEY")
 
 usda_website <- "https://www.usda.gov/"
 ams_website <- "https://www.ams.usda.gov/"
@@ -56,3 +59,22 @@ usda_footer <- tags$h3(
     ams_name
   )
 )
+
+# Get county level sales 2022
+sales <- tidyUSDA::getQuickstat(
+  sector = 'CROPS',
+  #group = c('FIELD CROPS', 'FRUIT & TREE NUTS', 'VEGETABLES'),
+  commodity='CROP TOTALS',
+  category='SALES',
+  #domain='SALES & DISTRIBUTION',
+  #county=NULL,
+  key = ag_census_api_key,
+  program = 'CENSUS',
+  #data_item = 'CROP TOTALS - SALES, MEASURED in $',
+  geographic_level = 'COUNTY',
+  year = '2022',
+  #state = 'ALABAMA',
+  geometry = TRUE,
+  lower48 = TRUE, 
+  weighted_by_area = TRUE) %>%
+  filter(grepl("SALES, MEASURED IN", short_desc))

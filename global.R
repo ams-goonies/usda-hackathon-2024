@@ -10,6 +10,7 @@ library(sass)
 library(echarts4r)
 library(echarts4r.maps)
 library(htmlwidgets)
+library(leaflet)
 
 # Compile sass to css
 sass(
@@ -20,7 +21,7 @@ sass(
 )
 
 # Modules
-map_view <- use("modules/map_view.R")
+map_view <- use("modules/map_view2.R")
 state_view <- use("modules/state_view.R")
 city_view <- use("modules/city_view.R")
 global_metrics_view <- use("modules/global_metrics_view.R")
