@@ -51,42 +51,42 @@ server <- function(input, output, session) {
     )
   }
   
-  # output$mapview <- renderEcharts4r({
-  #   state_data %>% 
-  #     e_charts(state_full) %>%
-  #     em_map("USA") %>% 
-  #     e_map(
-  #       value,
-  #       map = "USA",
-  #       name = "State total shipments",
-  #       roam = TRUE,
-  #       scaleLimit = list(min = 2, max = 8),
-  #       itemStyle = list(
-  #         areaColor = CONSTS$COLORS$ash_light,
-  #         borderColor = CONSTS$COLORS$white,
-  #         borderWidth = 0.5
-  #       ),
-  #       emphasis = list(
-  #         label = state_label(),
-  #         itemStyle = list(areaColor = CONSTS$COLORS$primary)
-  #       ),
-  #       select = list(
-  #         label = state_label(visible = TRUE),
-  #         itemStyle = list(areaColor = CONSTS$COLORS$primary)
-  #       )
-  #     ) %>%
-  #     e_visual_map(
-  #       value,
-  #       inRange = list(color = c(CONSTS$COLORS$ash_light, CONSTS$COLORS$secondary))
-  #     ) %>%
-  #     e_tooltip(
-  #       trigger = "item",
-  #       borderWidth = 0,
-  #       extraCssText = "box-shadow: 0 3px 12px rgba(0,0,0,0.2);"
-  #     )
-  # })
-  
-  output$mapview <- renderLeaflet({
-    
+  output$mapview <- renderEcharts4r({
+    state_data %>%
+      e_charts(state_full) %>%
+      em_map("USA") %>%
+      e_map(
+        value,
+        map = "USA",
+        name = "State total shipments",
+        roam = TRUE,
+        scaleLimit = list(min = 2, max = 8),
+        itemStyle = list(
+          areaColor = CONSTS$COLORS$ash_light,
+          borderColor = CONSTS$COLORS$white,
+          borderWidth = 0.5
+        ),
+        emphasis = list(
+          label = state_label(),
+          itemStyle = list(areaColor = CONSTS$COLORS$primary)
+        ),
+        select = list(
+          label = state_label(visible = TRUE),
+          itemStyle = list(areaColor = CONSTS$COLORS$primary)
+        )
+      ) %>%
+      e_visual_map(
+        value,
+        inRange = list(color = c(CONSTS$COLORS$ash_light, CONSTS$COLORS$secondary))
+      ) %>%
+      e_tooltip(
+        trigger = "item",
+        borderWidth = 0,
+        extraCssText = "box-shadow: 0 3px 12px rgba(0,0,0,0.2);"
+      )
   })
+  
+  # output$mapview <- renderLeaflet({
+  #   
+  # })
 }
