@@ -61,7 +61,7 @@ usda_footer <- tags$h3(
 )
 
 # Get county level sales 2022
-sales <- tidyUSDA::getQuickstat(
+state_sales <- tidyUSDA::getQuickstat(
   sector = 'CROPS',
   #group = c('FIELD CROPS', 'FRUIT & TREE NUTS', 'VEGETABLES'),
   commodity='CROP TOTALS',
@@ -72,7 +72,7 @@ sales <- tidyUSDA::getQuickstat(
   program = 'CENSUS',
   #data_item = 'CROP TOTALS - SALES, MEASURED in $',
   geographic_level = 'COUNTY',
-  year = '2022',
+  year = '2017',
   #state = 'ALABAMA',
   geometry = TRUE,
   lower48 = TRUE, 
