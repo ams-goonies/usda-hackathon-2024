@@ -5,6 +5,9 @@ library(sp)
 library(leaflet)
 library(leafgl)
 library(rgdal)
+#library(spData)
+#library(raster)
+library(geodata)
 
 
 pj <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
@@ -100,8 +103,25 @@ leaflet() %>%
   addLegend(pal = pal, values = c(1,2,3,4,5), opacity = 0.7, title = "DCI Quintile",
             position = "bottomright")
 
-  
-  
-saveRDS(d, file = "data/dci_county.rds")
+ #saveRDS(d, 'data/dci_county.rds') 
 
+#####################
+d_load <- readRDS('data/dci_county.rds')
+d_state <- d_load %>%
+  st_drop_geometry() %>%
+  ungroup() %>%
+  dplyr::group_by(State) %>%
+  summarize(mean = mean(`Distress Score`, na.rm = TRUE)) %>%
+
+data(us_states)
+
+s <- us_states %>%
+  rename(State = NAME) %>%
+  dplyr::select(State) %>%
+  merge(d_state, by = 'State') %>%
+  st_transform(4326)
+
+
+
+#saveRDS(s, 'data/dci_state_mean.rds') 
 

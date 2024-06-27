@@ -6,7 +6,7 @@ APP_TITLE <- "Ag Census Data Explorer"
 APP_TIME_RANGE <- ""
 APP_VERSION <- ""
 
-ag_census_api_key <- Sys.getenv("AG_CENSUS_API_KEY")
+#ag_census_api_key <- Sys.getenv("AG_CENSUS_API_KEY")
 
 usda_website <- "https://www.usda.gov/"
 ams_website <- "https://www.ams.usda.gov/"
@@ -61,20 +61,20 @@ usda_footer <- tags$h3(
 )
 
 # Get county level sales 2022
-state_sales <- tidyUSDA::getQuickstat(
-  sector = 'CROPS',
-  #group = c('FIELD CROPS', 'FRUIT & TREE NUTS', 'VEGETABLES'),
-  commodity='CROP TOTALS',
-  category='SALES',
-  #domain='SALES & DISTRIBUTION',
-  #county=NULL,
-  key = ag_census_api_key,
-  program = 'CENSUS',
-  #data_item = 'CROP TOTALS - SALES, MEASURED in $',
-  geographic_level = 'COUNTY',
-  year = '2017',
-  #state = 'ALABAMA',
-  geometry = TRUE,
-  lower48 = TRUE, 
-  weighted_by_area = TRUE) %>%
-  filter(grepl("SALES, MEASURED IN", short_desc))
+# state_sales <- tidyUSDA::getQuickstat(
+#   sector = 'CROPS',
+#   #group = c('FIELD CROPS', 'FRUIT & TREE NUTS', 'VEGETABLES'),
+#   commodity='CROP TOTALS',
+#   category='SALES',
+#   #domain='SALES & DISTRIBUTION',
+#   #county=NULL,
+#   key = ag_census_api_key,
+#   program = 'CENSUS',
+#   #data_item = 'CROP TOTALS - SALES, MEASURED in $',
+#   geographic_level = 'COUNTY',
+#   year = '2017',
+#   #state = 'ALABAMA',
+#   geometry = TRUE,
+#   lower48 = TRUE, 
+#   weighted_by_area = TRUE) %>%
+#   filter(grepl("SALES, MEASURED IN", short_desc))

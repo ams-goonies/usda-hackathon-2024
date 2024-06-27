@@ -32,11 +32,12 @@ init_server <- function(id) {
 server <- function(input, output, session, id) {
   ns <- session$ns
   
-  output$metricsbox1 <- renderText({ CONSTS$metrics_list$shipments$value })
+  #output$metricsbox1 <- renderText({ CONSTS$metrics_list$shipments$value })
+  output$metricsbox1 <- renderText({ 666 })
   output$metricsbox2 <- renderText({ CONSTS$metrics_list$weight$value })
 
-  if (id == "global_metrics_simple_view") {
-    output$metricsbox3 <- renderText({ CONSTS$metrics_list$locations$value })
-    output$metricsbox4 <- renderText({ CONSTS$metrics_list$shipments_day$value })
-  }
+  # if (id == "global_metrics_simple_view") {
+  #   output$metricsbox3 <- renderText({ CONSTS$metrics_list$locations$value })
+  #   output$metricsbox4 <- renderText({ CONSTS$metrics_list$shipments_day$value })
+  # }
 }
