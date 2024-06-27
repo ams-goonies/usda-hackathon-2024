@@ -1,12 +1,26 @@
 library(tidyverse)
 library(readxl)
 library(sf)
+library(sp)
 library(leaflet)
 library(leafgl)
+library(rgdal)
+
+
+pj <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
 
 all_zips <- read_sf('data/tl_2020_us_zcta510/tl_2020_us_zcta510.shp') %>%
-  st_transform(4326) %>%
-  st_simplify(dTolerance = 10)
+  st_transform(pj) %>%
+  st_make_valid() %>%
+  st_simplify(dTolerance = 0.01) %>%
+  st_cast('MULTIPOLYGON') %>%
+  st_cast('POLYGON')
+
+all_zips$area <- as.numeric(st_area(all_zips))
+
+all_zips <- all_zips %>%
+  group_by(GEOID10) %>%
+  filter(area == max(area))
 
 dci <- read_xlsx('data/DCI_2016_to_2020.xlsx')
 
@@ -28,33 +42,66 @@ d <- all_zips %>%
   select(
     Zipcode, `Distress Score`, Quintile, State, `State Abbreviation`
   ) %>%
-  #st_simplify() %>% 
-  #st_transform(4326) %>%
   mutate(Quintile = ifelse(!is.na(Quintile), as.character(Quintile), "No data")) 
   
-d2 <- d %>%
-  st_as_sf() %>%
-  st_make_valid() %>% 
-  st_cast('MULTIPOLYGON') %>% 
-  st_cast('POLYGON', do_split = TRUE)
+# my_map <- leaflet(options = leafletOptions(minZoom = 3)) %>%
+#   #addTiles() %>%
+#   addProviderTiles(providers$CartoDB.Positron) %>%
+#   setMaxBounds(
+#     lng1 = -127.8,
+#     lat1 = 52.5,
+#     lng2 = -63.8,
+#     lat2 = 21.4)
+# 
+# my_map %>%
+#   addPolygons(
+#     data = head(all_zips, 2500),
+#     color = 'darkblue',
+#     weight = 0.5,
+#     fillColor = 'pink',
+#     fillOpacity = 0.5
+#     )
 
-# export
-#sf::st_write(d, dsn = "dci_clean.geojson")
+# county level choropleth for single state
+or <- d %>%
+  filter(State == "Oregon") %>%
+  mutate(Quintile = as.factor(Quintile))
 
-my_map <- leaflet(options = leafletOptions(minZoom = 3)) %>%
-  #addTiles() %>%
+pal <- colorFactor("YlOrRd", domain = or$Quintile)
+
+labels <- sprintf(
+  "<strong>%s</strong><br/>%s",
+  or$Zipcode, or$Quintile
+) %>% lapply(htmltools::HTML)
+
+leaflet() %>%
+  #setView(-96, 37.8, 4) %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
-  setMaxBounds(
-    lng1 = -127.8,
-    lat1 = 52.5,
-    lng2 = -63.8,
-    lat2 = 21.4)
+  addPolygons(
+    data = or,
+    fillColor = ~pal(Quintile),
+    weight = 2,
+    opacity = 1,
+    color = "transparent",
+    #dashArray = "3",
+    fillOpacity = 0.6,
+    # highlightOptions = highlightOptions(
+    #   weight = 5,
+    #   color = "#666",
+    #   dashArray = "",
+    #   fillOpacity = 0.7,
+    #   bringToFront = TRUE)
+    # ),
+    label = labels,
+    labelOptions = labelOptions(
+      style = list("font-weight" = "normal", padding = "3px 8px"),
+      textsize = "15px",
+      direction = "auto")) %>%
+  addLegend(pal = pal, values = c(1,2,3,4,5), opacity = 0.7, title = "DCI Quintile",
+            position = "bottomright")
 
-my_map %>%
-  addGlPolygons(
-    data = head(d2, 10000),
-    color = cbind(0, 0.2, 1),
-    weight = 0.5,
-    fillColor = 'pink',
-    fillOpacity = 0.5
-    )
+  
+  
+saveRDS(d, file = "data/dci_county.rds")
+
+
