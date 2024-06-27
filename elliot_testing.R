@@ -2,9 +2,11 @@ library(tidyverse)
 library(readxl)
 library(sf)
 library(leaflet)
+library(leafgl)
 
 all_zips <- read_sf('data/tl_2020_us_zcta510/tl_2020_us_zcta510.shp') %>%
-  st_transform(4326)
+  st_transform(4326) %>%
+  st_simplify(dTolerance = 10)
 
 dci <- read_xlsx('data/DCI_2016_to_2020.xlsx')
 
@@ -28,7 +30,13 @@ d <- all_zips %>%
   ) %>%
   #st_simplify() %>% 
   #st_transform(4326) %>%
-  mutate(Quintile = ifelse(!is.na(Quintile), as.character(Quintile), "No data"))
+  mutate(Quintile = ifelse(!is.na(Quintile), as.character(Quintile), "No data")) 
+  
+d2 <- d %>%
+  st_as_sf() %>%
+  st_make_valid() %>% 
+  st_cast('MULTIPOLYGON') %>% 
+  st_cast('POLYGON', do_split = TRUE)
 
 # export
 #sf::st_write(d, dsn = "dci_clean.geojson")
@@ -43,4 +51,10 @@ my_map <- leaflet(options = leafletOptions(minZoom = 3)) %>%
     lat2 = 21.4)
 
 my_map %>%
-  addPolygons(data = d)
+  addGlPolygons(
+    data = head(d2, 10000),
+    color = cbind(0, 0.2, 1),
+    weight = 0.5,
+    fillColor = 'pink',
+    fillOpacity = 0.5
+    )
