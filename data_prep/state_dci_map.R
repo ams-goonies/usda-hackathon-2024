@@ -3,6 +3,8 @@ library(dplyr)
 library(spData)
 library(leaflet)
 
+sf_use_s2(FALSE)
+
 d_load <- readRDS('data/ready_for_app/dci_county.rds')
 
 d_state <- d_load %>%
@@ -17,7 +19,8 @@ s <- us_states %>%
   rename(State = NAME) %>%
   dplyr::select(State) %>%
   merge(d_state, by = 'State') %>%
-  st_transform(4326)
+  st_transform(4326) %>%
+  st_as_sf()
 
 state_pal <- colorNumeric("YlGnBu", domain = s$mean)
 
@@ -29,3 +32,5 @@ leaflet() %>%
     fillOpacity = 0.7,
     color = 'transparent'
   )
+
+# saveRDS(s, "data/ready_for_app/dci_state_mean.rds")

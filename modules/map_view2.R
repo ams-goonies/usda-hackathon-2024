@@ -42,7 +42,7 @@ server <- function(input, output, session) {
   #   ungroup() %>% 
   #   transmute(state, state_full, value = total.shipments)
   
-  dci_state <- readRDS('data/dci_state_mean.rds')
+  #dci_state <- readRDS('data/ready_for_app/dci_state_mean.rds')
   
   # state_label <- function(visible = FALSE) {
   #   list(
@@ -55,13 +55,13 @@ server <- function(input, output, session) {
   #   )
   # }
   
-  state_pal <- colorNumeric("YlGnBu", domain = dci_state$mean)
+  state_pal <- colorNumeric("YlGnBu", domain = CONSTS$dci_state$mean)
   
   output$mapview2 <- renderLeaflet({
     leaflet() %>%
       addProviderTiles(providers$CartoDB.Positron) %>%
       addPolygons(
-        data = dci_state,
+        data = CONSTS$dci_state,
         fillColor = ~state_pal(mean),
         fillOpacity = 0.7,
         color = 'transparent'

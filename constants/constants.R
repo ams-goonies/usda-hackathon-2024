@@ -2,6 +2,7 @@ import("shiny")
 import("dplyr")
 
 APP_DATA <- readRDS("./data/DATA_FAKE.rds")
+load('data/ready_for_app/ALL_DATA.RData')
 APP_TITLE <- "Ag Census Data Explorer"
 APP_TIME_RANGE <- ""
 APP_VERSION <- ""
