@@ -7,11 +7,12 @@ library(plotly)
 library(shinydashboard)
 library(ggplot2)
 library(sass)
-library(echarts4r)
-library(echarts4r.maps) # use remotes::install_github('JohnCoene/echarts4r.maps')
+#library(echarts4r)
+#library(echarts4r.maps) # use remotes::install_github('JohnCoene/echarts4r.maps')
 library(htmlwidgets)
 library(leaflet)
 library(tidyUSDA)
+library(shinyWidgets)
 
 # Compile sass to css
 sass(

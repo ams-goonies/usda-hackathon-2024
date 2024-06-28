@@ -34,15 +34,13 @@ init_server <- function(id) {
   callModule(server, id)
 }
 
-server <- function(input, output, session) {
+server <- function(input, output, session, state) {
   ns <- session$ns
-
-  # bubble_data <- CONSTS$APP_DATA$bubble_data
+  state <- reactive({state()})
+    # bubble_data <- CONSTS$APP_DATA$bubble_data
   # state_data <- CONSTS$APP_DATA$state_data %>%
   #   ungroup() %>% 
   #   transmute(state, state_full, value = total.shipments)
-  
-  #dci_state <- readRDS('data/ready_for_app/dci_state_mean.rds')
   
   # state_label <- function(visible = FALSE) {
   #   list(
@@ -64,9 +62,18 @@ server <- function(input, output, session) {
         data = CONSTS$dci_state,
         fillColor = ~state_pal(mean),
         fillOpacity = 0.7,
-        color = 'transparent'
+        color = 'transparent',
+        group = 'states'
       )
   })
+  
+  observeEvent(input$stateSelector, {
+    leafletProxy('mapview2', session) %>%
+      clearGroup('states')
+    
+  })
+  
+  
   
   # output$mapview <- renderEcharts4r({
   #   state_data %>%
