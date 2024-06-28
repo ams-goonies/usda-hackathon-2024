@@ -45,5 +45,5 @@ d <- all_zips %>%
   ) %>%
   mutate(Quintile = ifelse(!is.na(Quintile), as.character(Quintile), "No data"))
 
-saveRDS(d, 'data/ready_for_app/dci_county.rds')
+#saveRDS(d, 'data/ready_for_app/dci_county.rds')
 
