@@ -50,3 +50,5 @@ all_sales <- state_sales_2017 %>%
     change_pct = round(change / value_2017 * 100, 2)
   )
 
+saveRDS(all_sales, 'data/ready_for_app/state_sales_totals.rds')
+
