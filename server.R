@@ -1,9 +1,41 @@
+library(shiny)
+library(leaflet)
+library(dplyr)
+
+# Define server logic required to draw a histogram
 function(input, output, session) {
 
-  # Advanced dashboard modules
-  session$userData$map_view <- map_view$init_server("map_advanced_view")
-  session$userData$state_view <- state_view$init_server("state_advanced_view")
-  city_view$init_server("city_advanced_view")
-  global_metrics_view$init_server("global_metrics_advanced_view")
-  local_metrics_view$init_server("local_metrics_advanced_view")
+    state_pal <- colorNumeric("YlGnBu", domain = dci_state$mean)
+    
+    output$mapview <- renderLeaflet({
+      leaflet() %>%
+        addProviderTiles(providers$CartoDB.Positron) %>%
+        addPolygons(
+          data = dci_state,
+          fillColor = ~state_pal(mean),
+          fillOpacity = 0.7,
+          color = 'transparent',
+          group = 'states'
+        )
+    })
+    
+    observeEvent(input$stateSelector, {
+      state <- dci_state %>%
+        filter(State == input$stateSelector)
+      
+      leafletProxy('mapview') %>%
+        clearGroup('states') %>%
+        addPolygons(
+          data = state,
+          fillColor = 'pink',
+          fillOpacity = 0.7,
+          color = 'transparent',
+          group = 'states'
+        )
+        
+
+    })
+    
+    
+
 }
