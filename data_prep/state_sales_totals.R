@@ -47,7 +47,8 @@ all_sales <- state_sales_2017 %>%
   merge(state_sales_2022, by = c('state_name', 'short_desc')) %>%
   mutate(
     change = value_2022 - value_2017,
-    change_pct = round(change / value_2017 * 100, 2)
+    change_pct = round(change / value_2017 * 100, 2),
+    county_name = "ALL"
   )
 
 saveRDS(all_sales, 'data/ready_for_app/state_sales_totals.rds')

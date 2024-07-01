@@ -14,7 +14,7 @@ commodities_sales <- tidyUSDA::getQuickstat(
   geographic_level = 'STATE',
   year = c('2022', '2017'),
   geometry = FALSE,
-  lower48 = FALSE, 
+  lower48 = FALSE,
   weighted_by_area = FALSE) %>%
   filter(
     grepl("SALES, MEASURED IN", short_desc),
@@ -68,10 +68,10 @@ state_totals <-  tidyUSDA::getQuickstat(
 commodities_by_state <- commodities %>% 
   left_join(state_totals, by = c("state_name", "year")) %>% 
   pivot_wider(names_from = year, values_from = c(Value, state_total)) %>% 
-  mutate(pct_of_total_2022 = round(Value_2022/state_total_2022 * 100, 4),
-         pct_of_total_2017 = round(Value_2017/state_total_2017 * 100, 4),
+  mutate(pct_of_total_2022 = round(Value_2022/state_total_2022 * 100, 2),
+         pct_of_total_2017 = round(Value_2017/state_total_2017 * 100, 2),
          change = Value_2022 - Value_2017,
-         pct_change = round(change / Value_2017 * 100, 4)) %>% 
+         change_pct = round(change / Value_2017 * 100, 4)) %>% 
   arrange(state_name, desc(pct_of_total_2022))
 
 #write.csv(commodities_by_state, 'data/commodity_pct_by_state.csv')
@@ -89,5 +89,9 @@ reduced_commodities_by_state <- commodities_by_state %>%
                              "EQUINE, (HORSES & PONIES) & (MULES & BURROS & DONKEYS) - SALES, MEASURED IN $",
                              "FRUIT & TREE NUT TOTALS - SALES, MEASURED IN $"))
          )
+
+state_commodity_sales <- reduced_commodities_by_state %>%
+  mutate(county_name = "ALL") %>%
+  select(state_name, county_name, short_desc, Value_2017, Value_2022, change, change_pct)
 
 #write.csv(reduced_commodities_by_state, 'data/commodity_pct_by_state_reduced.csv')
