@@ -1,4 +1,4 @@
-akey <- "91110E21-FB5B-3FDA-890D-8E84C1251469"
+akey <- Sys.getenv("AG_CENSUS_API_KEY")
 
 #Get state level sales 2022
 
