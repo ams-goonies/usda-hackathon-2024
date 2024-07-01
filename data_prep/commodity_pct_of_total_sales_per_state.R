@@ -74,7 +74,7 @@ commodities_by_state <- commodities %>%
          pct_change = round(change / Value_2017 * 100, 4)) %>% 
   arrange(state_name, desc(pct_of_total_2022))
 
-#write.csv(commodities_by_state, 'data/commodity_pct_by_state')
+#write.csv(commodities_by_state, 'data/commodity_pct_by_state.csv')
 
 # ------------------------------------------------------------------------------
 # Removing the double-counted totals
@@ -82,7 +82,7 @@ commodities_by_state <- commodities %>%
 reduced_commodities_by_state <- commodities_by_state %>% 
   filter(!grepl("TOTALS", group_desc),
          !(commodity_desc %in% c("CUT CHRISTMAS TREES & SHORT TERM WOODY CROPS",
-                                 "SHEEP & GOAT TOTALS",
+                                 "SHEEP & GOATS TOTALS",
                                  "HORTICULTURE TOTALS",
                                  "AQUACULTURE TOTALS")),
          !(short_desc %in% c("GRAIN - SALES, MEASURED IN $",
@@ -90,4 +90,4 @@ reduced_commodities_by_state <- commodities_by_state %>%
                              "FRUIT & TREE NUT TOTALS - SALES, MEASURED IN $"))
          )
 
-#write.csv(reduced_commodities_by_state, 'data/commodity_pct_by_state_reduced')
+#write.csv(reduced_commodities_by_state, 'data/commodity_pct_by_state_reduced.csv')
