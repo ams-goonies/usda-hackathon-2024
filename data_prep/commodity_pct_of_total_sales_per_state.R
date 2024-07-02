@@ -91,7 +91,7 @@ reduced_commodities_by_state <- commodities_by_state %>%
          !(short_desc %in% c("GRAIN - SALES, MEASURED IN $",
                              "EQUINE, (HORSES & PONIES) & (MULES & BURROS & DONKEYS)",
                              "FRUIT & TREE NUT TOTALS",
-                             "VEGETABLE TOTALS, INCL SEEDS & TRANSPLANTS, IN THE OPEN"))
+                             "VEGETABLE TOTALS, INCL SEEDS & TRANSPLANTS, UNDER PROTECTION"))
          )
 
 # write.csv(reduced_commodities_by_state, 'data/commodity_pct_by_state_reduced.csv')
