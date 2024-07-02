@@ -43,8 +43,11 @@ commodities_distr <- tidyUSDA::getQuickstat(
   ) %>%
   select(year, state_name, group_desc, commodity_desc, short_desc, Value)
 
-# Combine all commodities into 1 dataset
-commodities <- rbind(commodities_sales, commodities_distr)
+# Combine all commodities into 1 dataset and shorten data item name
+commodities <- rbind(commodities_sales, commodities_distr) %>% 
+  mutate(short_desc = vapply(short_desc, function(x){
+    strsplit(x, " - ")[[1]][1]
+  }, "abc"))
 
 
 # Retrieve commodity totals per state via query
@@ -74,10 +77,10 @@ commodities_by_state <- commodities %>%
          pct_change = round(change / Value_2017 * 100, 4)) %>% 
   arrange(state_name, desc(pct_of_total_2022))
 
-#write.csv(commodities_by_state, 'data/commodity_pct_by_state.csv')
+# write.csv(commodities_by_state, 'data/commodity_pct_by_state.csv')
 
 # ------------------------------------------------------------------------------
-# Removing the double-counted totals
+# Removing the double-counted totals for the lollipop chart only
   # reference: https://www.nass.usda.gov/Publications/AgCensus/2022/Full_Report/Volume_1,_Chapter_2_US_State_Level/st99_2_002_002.pdf
 reduced_commodities_by_state <- commodities_by_state %>% 
   filter(!grepl("TOTALS", group_desc),
@@ -87,7 +90,8 @@ reduced_commodities_by_state <- commodities_by_state %>%
                                  "AQUACULTURE TOTALS")),
          !(short_desc %in% c("GRAIN - SALES, MEASURED IN $",
                              "EQUINE, (HORSES & PONIES) & (MULES & BURROS & DONKEYS) - SALES, MEASURED IN $",
-                             "FRUIT & TREE NUT TOTALS - SALES, MEASURED IN $"))
+                             "FRUIT & TREE NUT TOTALS - SALES, MEASURED IN $",
+                             "VEGETABLE TOTALS, INCL SEEDS & TRANSPLANTS, IN THE OPEN - SALES, MEASURED IN $"))
          )
 
-#write.csv(reduced_commodities_by_state, 'data/commodity_pct_by_state_reduced.csv')
+# write.csv(reduced_commodities_by_state, 'data/commodity_pct_by_state_reduced.csv')
