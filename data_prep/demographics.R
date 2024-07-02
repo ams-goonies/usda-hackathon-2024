@@ -1,5 +1,7 @@
 library(tidyUSDA)
 library(dplyr)
+library(tidyr)
+source('data_prep/helper_functions.R')
 
 key <- Sys.getenv("AG_CENSUS_API_KEY")
 
@@ -23,58 +25,65 @@ items <- c('PRODUCERS, (ALL), FEMALE - NUMBER OF PRODUCERS',
            )
 
 groups <- c('OPERATORS', 'PRODUCERS')
-
-small <- c(
-  "FARM SALES: (LESS THAN 1,000 $)",
-  "FARM SALES: (1,000 TO 2,499 $)",
-  "FARM SALES: (2,500 TO 4,999 $)",
-  "FARM SALES: (5,000 TO 9,999 $)",
-  "FARM SALES: (10,000 TO 24,999 $)",
-  "FARM SALES: (25,000 TO 49,999 $)",
-  "FARM SALES: (50,000 TO 99,999 $)",
-  "FARM SALES: (100,000 TO 249,999 $)"
-)
-
-not_small <- c(
-  "FARM SALES: (250,000 TO 499,999 $)",
-  "FARM SALES: (500,000 TO 999,999 $)",
-  "FARM SALES: (1,000,000 OR MORE $)"
-  )
   
 get_demographic_data <- function(item, geographic_level = "STATE", state = NULL){
-  demo_states <- tidyUSDA::getQuickstat(
+  demos <- tidyUSDA::getQuickstat(
     sector = 'DEMOGRAPHICS',
-    group = 'PRODUCERS',
     key = key,
     program = 'CENSUS',
     geographic_level = geographic_level,
     data_item = item,
     year =  c('2017', '2022'),
-    state = state,
-    geometry = FALSE) %>%
-    dplyr::filter(
-      group_desc %in% groups,
-      grepl('FARM SALES', domaincat_desc)
-    ) %>%
-    mutate(
-      county_name = "ALL",
-      year = as.character(year),
-      small_farm = ifelse(domaincat_desc %in% small, TRUE, FALSE)
-      ) %>%
+    state = state) %>%
+    filter(group_desc %in% groups)
+                  
+  if (length(demos$domaincat_desc[grepl("FARM SALES", demos$domaincat_desc)]) > 0) {
+    demos <- demos %>% 
+      filter(grepl('FARM SALES', domaincat_desc))
+  } else {
+      demos <- demos %>% mutate(farm_size = 'All')
+      }
+  
+  if (geographic_level == 'STATE') {
+    demos <- demos %>%
+      mutate(county_name = "ALL"        )
+    demos <- categorize_by_size(demos)
+  }
+  
+  demos <- demos %>%
     select(
-      state_name, county_name, short_desc, small_farm, year, Value
+      state_name, county_name, short_desc, farm_size, year, Value
     ) %>%
+    group_by(state_name, county_name, short_desc, farm_size, year) %>%
+    summarize(Value = sum(Value), .groups = 'drop')
+
+  totals <- demos %>%
+    group_by(state_name, county_name, short_desc, year) %>%
+    summarize(Value = sum(Value), .groups = 'drop') %>%
+    mutate(farm_size = "All")
+  
+  demos <- bind_rows(demos, totals)
+  
+  demos <- demos %>%
+    group_by(year) %>%
+    mutate(row = row_number()) %>%
     pivot_wider(
       names_prefix = 'Value_',
       names_from = year, 
       values_from = Value
-    )
+    ) %>%
+    select(-row) %>%
+    mutate(
+      change = Value_2022 - Value_2017,
+      change_pct = round(change / Value_2017 * 100, 2)) %>% 
+    arrange(state_name, desc(farm_size))
   
-  return(demo_states)
+  return(demos)
 }
 
-
+##################################
 # get state level data
+##################################
 items_dfs <- list()
 
 for (i in 1:length(items)){
@@ -87,7 +96,9 @@ state_demographics <- bind_rows(items_dfs)
 saveRDS(state_demographics, 'data/ready_for_app/state_demographics.rds')
 
 
+###################################
 # Get county level data
+###################################
 state_list <- readRDS('data/ready_for_app/state_sales_totals.rds') %>%
   pull(state_name)
 
