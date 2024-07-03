@@ -74,7 +74,7 @@ commodities_by_state <- commodities %>%
   mutate(pct_of_total_2022 = round(Value_2022/state_total_2022 * 100, 4),
          pct_of_total_2017 = round(Value_2017/state_total_2017 * 100, 4),
          change = Value_2022 - Value_2017,
-         pct_change = round(change / Value_2017 * 100, 4)) %>% 
+         change_pct = round(change / Value_2017 * 100, 4)) %>% 
   arrange(state_name, desc(pct_of_total_2022))
 
 # write.csv(commodities_by_state, 'data/commodity_pct_by_state.csv')
