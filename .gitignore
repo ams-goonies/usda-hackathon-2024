@@ -15,3 +15,6 @@
 
 # shiny files
 /rsconnect/
+
+# all data, for now
+/data/
