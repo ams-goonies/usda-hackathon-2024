@@ -14,7 +14,7 @@ commodities_sales <- tidyUSDA::getQuickstat(
   geographic_level = 'STATE',
   year = c('2022', '2017'),
   geometry = FALSE,
-  lower48 = FALSE,
+  lower48 = FALSE, 
   weighted_by_area = FALSE) %>%
   filter(
     grepl("SALES, MEASURED IN", short_desc),
@@ -43,8 +43,11 @@ commodities_distr <- tidyUSDA::getQuickstat(
   ) %>%
   select(year, state_name, group_desc, commodity_desc, short_desc, Value)
 
-# Combine all commodities into 1 dataset
-commodities <- rbind(commodities_sales, commodities_distr)
+# Combine all commodities into 1 dataset and shorten data item name
+commodities <- rbind(commodities_sales, commodities_distr) %>% 
+  mutate(short_desc = vapply(short_desc, function(x){
+    strsplit(x, " - ")[[1]][1]
+  }, "abc"))
 
 
 # Retrieve commodity totals per state via query
@@ -68,14 +71,16 @@ state_totals <-  tidyUSDA::getQuickstat(
 commodities_by_state <- commodities %>% 
   left_join(state_totals, by = c("state_name", "year")) %>% 
   pivot_wider(names_from = year, values_from = c(Value, state_total)) %>% 
-  mutate(pct_of_total_2022 = round(Value_2022/state_total_2022 * 100, 2),
-         pct_of_total_2017 = round(Value_2017/state_total_2017 * 100, 2),
+  mutate(pct_of_total_2022 = round(Value_2022/state_total_2022 * 100, 4),
+         pct_of_total_2017 = round(Value_2017/state_total_2017 * 100, 4),
          change = Value_2022 - Value_2017,
          change_pct = round(change / Value_2017 * 100, 4)) %>% 
   arrange(state_name, desc(pct_of_total_2022))
 
+# write.csv(commodities_by_state, 'data/commodity_pct_by_state.csv')
+
 # ------------------------------------------------------------------------------
-# Removing the double-counted totals
+# Removing the double-counted totals for the lollipop chart only
   # reference: https://www.nass.usda.gov/Publications/AgCensus/2022/Full_Report/Volume_1,_Chapter_2_US_State_Level/st99_2_002_002.pdf
 reduced_commodities_by_state <- commodities_by_state %>% 
   filter(!grepl("TOTALS", group_desc),
@@ -84,17 +89,9 @@ reduced_commodities_by_state <- commodities_by_state %>%
                                  "HORTICULTURE TOTALS",
                                  "AQUACULTURE TOTALS")),
          !(short_desc %in% c("GRAIN - SALES, MEASURED IN $",
-                             "EQUINE, (HORSES & PONIES) & (MULES & BURROS & DONKEYS) - SALES, MEASURED IN $",
-                             "FRUIT & TREE NUT TOTALS - SALES, MEASURED IN $"))
+                             "EQUINE, (HORSES & PONIES) & (MULES & BURROS & DONKEYS)",
+                             "FRUIT & TREE NUT TOTALS",
+                             "VEGETABLE TOTALS, INCL SEEDS & TRANSPLANTS, UNDER PROTECTION"))
          )
 
-state_commodity_sales <- reduced_commodities_by_state %>%
-  mutate(
-    county_name = "ALL",
-    pct_change = ifelse(change == 0, 0, 
-                        ifelse(Value_2017 == 0, NaN, pct_change))
-    
-    ) %>%
-  select(state_name, county_name, short_desc, Value_2017, Value_2022, change, pct_change)
-
-#write.csv(reduced_commodities_by_state, 'data/commodity_pct_by_state_reduced.csv')
+# write.csv(reduced_commodities_by_state, 'data/commodity_pct_by_state_reduced.csv')
