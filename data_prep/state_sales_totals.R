@@ -80,12 +80,14 @@ all_sales <- bind_rows(all_sales, totals) %>%
   mutate(
     change = value_2022 - value_2017,
     change_pct = round(change / value_2017 * 100, 2),
-    county_name = "ALL"
+    county_name = "All",
+    metric = "Total sales, $"
   ) %>%
   select(
-    state_name, county_name, short_desc, farm_size, value_2017, value_2022,
-    change, change_pct
+    state_name, county_name, short_desc, farm_size, metric,
+    value_2017, value_2022, change, change_pct
   )
+
 
 saveRDS(all_sales, 'data/ready_for_app/state_sales_totals.rds')
 
