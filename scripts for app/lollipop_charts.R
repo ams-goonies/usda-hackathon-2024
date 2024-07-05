@@ -12,7 +12,6 @@ library(plotly)
 
 demo <- readRDS("C:/Users/Stella.Koh/USDA/AMS Grants Division (GD) - Data Room/Division Wide/Hackathon 2024/ready_for_app/state_demographics.rds")
 reduced_commodities_by_state <- read.csv('C:/Users/Stella.Koh/OneDrive - USDA/2022 Ag Census/reduced_commodity_pct_by_state.csv')
-commodities_by_state <- read.csv('C:/Users/Stella.Koh/OneDrive - USDA/2022 Ag Census/commodity_pct_by_state.csv')
 
 lollipop_chart <- function(variable = "commodities", state_input = NA, size_input = "All") {
   # variable: commodities, demographics
@@ -27,7 +26,8 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
       # Filters by state
       filtered <- reduced_commodities_by_state %>% 
         filter(state_name == state_input)
-      
+
+      # Record omitted data
       omitted <- filtered %>% 
         filter(is.na(Value_2022) | is.na(Value_2017)) %>% 
         select(short_desc) %>% 
@@ -42,12 +42,6 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
     } else {
       
       demo <- readRDS("C:/Users/Stella.Koh/USDA/AMS Grants Division (GD) - Data Room/Division Wide/Hackathon 2024/ready_for_app/state_demographics.rds")
-      
-      # Retrieving national totals (by summing ANIMAL + CROP TOTALS for accuracy)
-      total_sales <- commodities_by_state %>% 
-        filter(grepl("TOTALS", group_desc)) %>% 
-        select(Value_2017, Value_2022) %>% 
-        colSums()
       
       # Aggregating all states to get national totals
       filtered <- reduced_commodities_by_state %>% 
@@ -110,15 +104,17 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
     if (!is.na(state_input)) {
       filtered <- demo %>% 
         filter(state_name == state_input,
-               farm_size == size_input)
-    } else {
-      # get total number of producers by adding males & females
-      total_number <- demo %>% 
-        filter(farm_size == size_input,
-               short_desc %in% sex) %>% 
-        select(Value_2017, Value_2022) %>% 
-        colSums()
+               farm_size == size_input) 
+
+      # Record omitted data
+      omitted <- filtered %>% 
+        filter(is.na(change_pct)) %>% 
+        select(short_desc) %>% unlist() %>% 
+        paste(collapse = "; ")
       
+      filtered <- filtered %>% 
+        mutate_at(c("Value_2017","Value_2022","change","change_pct"), ~replace_na(.,0))
+    } else {
       filtered <- demo %>% 
         filter(farm_size == size_input) %>% 
         group_by(short_desc) %>% 
@@ -156,5 +152,8 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
           panel.border = element_blank(),
           axis.ticks.x = element_blank())
   lollipop
+  
+  # To Add: information icon detailing omitted variables
+  # paste("The following variables were omitted due to missing information:", omitted)
 }
 
