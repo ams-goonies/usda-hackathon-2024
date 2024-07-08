@@ -41,9 +41,9 @@ state_sales_2017 <- tidyUSDA::getQuickstat(
     farm_size = ifelse(domaincat_desc %in% small, "Small", "Not small")
   ) %>%
   select(state_name, short_desc, farm_size, Value) %>%
-  rename(value_2017 = Value) %>%
+  rename(Value_2017 = Value) %>%
   group_by(state_name, short_desc, farm_size) %>%
-  summarise(value_2017 = sum(value_2017, na.rm = TRUE), .groups = 'drop')
+  summarise(Value_2017 = sum(Value_2017, na.rm = TRUE), .groups = 'drop')
 
 # same for 2022
 state_sales_2022 <- tidyUSDA::getQuickstat(
@@ -58,9 +58,9 @@ state_sales_2022 <- tidyUSDA::getQuickstat(
     farm_size = ifelse(domaincat_desc %in% small, "Small", "Not small")
   ) %>%
   select(state_name, short_desc, farm_size, Value) %>%
-  rename(value_2022 = Value) %>%
+  rename(Value_2022 = Value) %>%
   group_by(state_name, short_desc, farm_size) %>%
-  summarise(value_2022 = sum(value_2022, na.rm = TRUE), .groups = 'drop')
+  summarise(Value_2022 = sum(Value_2022, na.rm = TRUE), .groups = 'drop')
 
 all_sales <- state_sales_2017 %>%
   merge(state_sales_2022, by = c('state_name', 'short_desc', 'farm_size'))
@@ -68,8 +68,8 @@ all_sales <- state_sales_2017 %>%
 totals <- all_sales %>%
   group_by(state_name, short_desc) %>%
   summarize(
-    value_2017 = sum(value_2017, na.rm = TRUE),
-    value_2022 = sum(value_2022, na.rm = TRUE), 
+    Value_2017 = sum(Value_2017, na.rm = TRUE),
+    Value_2022 = sum(Value_2022, na.rm = TRUE), 
     .groups = 'drop'
     ) %>%
   mutate(
@@ -78,14 +78,14 @@ totals <- all_sales %>%
 all_sales <- bind_rows(all_sales, totals) %>%
   arrange(state_name, desc(farm_size)) %>%
   mutate(
-    change = value_2022 - value_2017,
-    change_pct = round(change / value_2017 * 100, 2),
+    change = Value_2022 - Value_2017,
+    change_pct = round(change / Value_2017 * 100, 2),
     county_name = "All",
     metric = "Total sales, $"
   ) %>%
   select(
     state_name, county_name, short_desc, farm_size, metric,
-    value_2017, value_2022, change, change_pct
+    Value_2017, Value_2022, change, change_pct
   )
 
 
