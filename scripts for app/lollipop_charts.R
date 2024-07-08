@@ -13,7 +13,7 @@ library(plotly)
 demo <- readRDS("C:/Users/Stella.Koh/USDA/AMS Grants Division (GD) - Data Room/Division Wide/Hackathon 2024/ready_for_app/state_demographics.rds")
 reduced_commodities_by_state <- read.csv('C:/Users/Stella.Koh/OneDrive - USDA/2022 Ag Census/reduced_commodity_pct_by_state.csv')
 
-lollipop_chart <- function(variable = "commodities", state_input = NA, size_input = "All") {
+lollipop_chart <- function(variable = "commodities", state_input = NA, size_input = "All", n = 10) {
   # variable: commodities, demographics
   # state_input: state name or NA (for US total)
   # size_input: All, Not small, Small (for demographics only)
@@ -26,22 +26,15 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
       # Filters by state
       filtered <- reduced_commodities_by_state %>% 
         filter(state_name == state_input)
-
-      # Record omitted data
+      
       omitted <- filtered %>% 
-        filter(is.na(Value_2022) | is.na(Value_2017)) %>% 
-        select(short_desc) %>% 
-        unlist() %>% 
-        paste(collapse = "; ")
-      if(omitted == "") {omitted <- "none"}
+        filter(is.na(Value_2022) | is.na(Value_2017))
       
       filtered <- filtered %>% 
         na.omit() %>% 
         slice(1:n)
       
     } else {
-      
-      demo <- readRDS("C:/Users/Stella.Koh/USDA/AMS Grants Division (GD) - Data Room/Division Wide/Hackathon 2024/ready_for_app/state_demographics.rds")
       
       # Aggregating all states to get national totals
       filtered <- reduced_commodities_by_state %>% 
@@ -53,10 +46,7 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
       
       # Recording omitted data
       omitted <- filtered %>% 
-        filter(Value_2017 == 0 | Value_2022 == 0) %>% 
-        select(short_desc) %>% 
-        unlist() %>% 
-        paste(collapse = "; ")
+        filter(Value_2017 == 0 | Value_2022 == 0) 
       
       # Finish filtering data
       filtered <- filtered %>% 
@@ -69,9 +59,13 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
     
     # Lollipop chart -- unique elements
     lollipop <- ggplot(filtered) +
-      geom_segment(aes(x=reorder(short_desc, Value_2022), xend=short_desc, y=Value_2017, yend=Value_2022, color = change_pct), linewidth = 1.5)
+      geom_segment(aes(x=reorder(short_desc, Value_2022), xend=short_desc, y=Value_2017, yend=Value_2022, color = change_pct,
+                       text = paste(short_desc, "\nPercentage Change:", sprintf("%.2f%%", change_pct))), linewidth = 1.5)
+    
     sub_label <- paste("TOP", n, "COMMODITY SALES IN", ifelse(is.na(state_input), "THE US", state_input), "FROM 2017 TO 2022")
     y_label <- "Sales, Measured in $"
+    x_label1 <- "Sales in 2017: $"
+    x_label2 <- "Sales in 2022: $"
     
   } else {
     
@@ -105,15 +99,13 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
       filtered <- demo %>% 
         filter(state_name == state_input,
                farm_size == size_input) 
-
-      # Record omitted data
+      
       omitted <- filtered %>% 
-        filter(is.na(change_pct)) %>% 
-        select(short_desc) %>% unlist() %>% 
-        paste(collapse = "; ")
+        filter(is.na(change_pct))
       
       filtered <- filtered %>% 
         mutate_at(c("Value_2017","Value_2022","change","change_pct"), ~replace_na(.,0))
+      
     } else {
       filtered <- demo %>% 
         filter(farm_size == size_input) %>% 
@@ -127,19 +119,34 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
     }
     
     lollipop <- ggplot(filtered) +
-      geom_segment(aes(x=factor(short_desc, levels = rev(all)), xend=short_desc, y=Value_2017, yend=Value_2022, color = change_pct), linewidth = 1.5)
+      geom_segment(aes(x=factor(short_desc, levels = rev(all)), xend=short_desc, y=Value_2017, yend=Value_2022, color = change_pct,
+                       text = paste(short_desc, "\nPercentage Change:", sprintf("%.2f%%", change_pct))), 
+                   linewidth = 1.5) 
+    
     sub_label <- paste(ifelse(is.na(state_input), "US", state_input), "DEMOGRAPHICS, PCT CHANGE FROM 2017 TO 2022")
     y_label <- "Number of Producers"
+    x_label1 <- "Number of Producers in 2017:"
+    x_label2 <- "Number of Producers in 2022:"
   }
+  
+  # To Add: information icon detailing omitted variables
+  omitted <- omitted %>%
+        select(short_desc) %>% 
+        unlist() %>% 
+        paste(collapse = "; ")
+  if(omitted == "") {omitted <- "none"}
+  omitted <- paste("The following variables were omitted due to missing information:", omitted)
+
   
   # Adding on to lollipop chart
   lollipop <- lollipop +
-    scale_color_gradient2(low = "darkred", mid = "#FFFF33", high = "darkgreen", midpoint = 0) +
-    geom_point(aes(x=short_desc, y=Value_2017, color=change_pct), size=4, shape = '|', show.legend = TRUE) +
-    geom_point(aes(x=short_desc, y=Value_2022, color=change_pct), size=4, show.legend = TRUE)  +
+    geom_point(aes(x=short_desc, y=Value_2017, color=change_pct,
+                   text = paste(x_label1, comma(Value_2017), sep = "")), size=2) +
+    geom_point(aes(x=short_desc, y=Value_2022, color=change_pct,
+                   text = paste(x_label2, comma(Value_2022), sep = "")), size=4) +
+    scale_color_gradient2(low = "darkred", mid = "#FFFF33", high = "darkgreen", midpoint = 0)  +
     coord_flip()+
-    labs(title = "Year Over Year Change",
-         subtitle = sub_label) +
+    labs(paste("YEAR OVER YEAR CHANGE:", sub_label)) +
     xlab("") +
     ylab(y_label) +
     scale_y_continuous(
@@ -151,9 +158,9 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
           panel.grid.minor = element_blank(),
           panel.border = element_blank(),
           axis.ticks.x = element_blank())
-  lollipop
   
-  # To Add: information icon detailing omitted variables
-  # paste("The following variables were omitted due to missing information:", omitted)
+  plotly(lollipop, tooltip = c("text")) +
+    layout(hovermode = "y unified")
 }
+
 
