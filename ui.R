@@ -1,44 +1,58 @@
-CONSTS <- use("constants/constants.R")
+library(shiny)
+library(leaflet)
+library(bslib)
 
-dashboardPage(
-  dashboardHeader(
-    # App title visible in browser tab
-    title = CONSTS$APP_TITLE,
-    # App title visible
-    tags$li(class = "dropdown title", tags$h1(CONSTS$APP_TITLE)),
-    # App current version
-    tags$li(class = "dropdown version", tags$p(CONSTS$APP_VERSION)),
-    # App time range
-    tags$li(class = "dropdown time-range", tags$p(CONSTS$APP_TIME_RANGE)),
-    # App logo
-    tags$li(class = "dropdown logo", CONSTS$usda_logo)
-  ),
-  dashboardSidebar(
-    sidebarMenu(
-      # Simple dashboard tab
-      #menuItem("Simple Dashboard", tabName = "simpleDashboard", icon = icon("chart-line")),
-      # Advanced dashboard tab
-      menuItem("Main Dashboard", tabName = "advancedDashboard", icon = icon("chart-bar")),
-      # Contact tab
-      menuItem("Contact", tabName = "contact", icon = icon("id-card"))
-    )
-  ),
-  dashboardBody(
-    tags$head(
-      # Reset favicon
-      tags$link(rel = "shortcut icon", href = "#"),
-      # Compiled css file
-      tags$link(rel = "stylesheet", type = "text/css", href = "css/sass.min.css")
+
+ui <- page_fillable(
+  
+  title = "USDA Ag Census Data Explorer",
+  
+  layout_columns(
+    card(
+      card_header("User Inputs"),
+      selectInput(
+        inputId = "stateSelector",
+        label = "Choose a state:",
+        choices = c(dci_state$State, "(No state selected)"),
+        selected = "(No state selected)"
+      ),
+      selectInput(
+        inputId = "countySelector",
+        label = "Choose a county:",
+        choices = c("(select a state above to view counties)")#,#c(dci_state$State, "(No state selected)"),
+        #selected = "(No state selected)"
+      ),
+      selectInput(
+        inputId = "metricSelector",
+        label = "Metric to view:",
+        choices = c("Total sales",
+                    "Acres in production",
+                    "Number of farms"
+        )#,#c(dci_state$State, "(No state selected)"),
+        #selected = "(No state selected)"
+      ),
+      selectInput(
+        inputId = "demographicSelector",
+        label = "Demographic metric:",
+        choices = c("Female", "Veteran", "Native American")#,#c(dci_state$State, "(No state selected)"),
+        #selected = "(No state selected)"
+      )
+      
     ),
-    tabItems(
-      # Simple dashboard tab
-      #tabItem("simpleDashboard", simpleDashboardTab),
-      # Advanced dashboard tab
-      tabItem("advancedDashboard", advancedDashboardTab),
-      # Contact tab
-      tabItem("contact", contactTab)
+    card(
+      card_header("Map"),
+      leafletOutput('mapview')
     ),
-    # You are not supposed to remove this footer
-    tags$footer(class = "footer", CONSTS$usda_footer)
+    col_widths = c(4, 8)
+  ),
+  layout_columns(
+    card(
+      card_header("Plot"),
+      plotOutput('fake_map')
+      ),
+    card(card_header("Table")),
+    col_widths = c(4, 8)
   )
+  
 )
+
