@@ -70,7 +70,6 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
   } else {
     
     # Filtering demographics dataset
-    
     demo <- demo %>% 
       mutate(short_desc = vapply(short_desc, function(x){
         x <- gsub("[(]ALL), ","",x)
@@ -113,7 +112,12 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
         mutate(Value_2022 = sum(Value_2022, na.rm = TRUE),
                Value_2017 = sum(Value_2017, na.rm = TRUE)) %>%
         slice(1) %>% 
-        select(short_desc, Value_2017, Value_2022) %>% 
+        select(short_desc, Value_2017, Value_2022) 
+      
+      omitted <- filtered %>% 
+        filter(Value_2017 == 0 | Value_2022 == 0) 
+      
+      filtered <- filtered %>% 
         filter(Value_2017 > 0, Value_2022 > 0) %>% 
         mutate(change_pct = round((Value_2022 - Value_2017)/Value_2017 * 100, 4))
     }
@@ -131,12 +135,12 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
   
   # To Add: information icon detailing omitted variables
   omitted <- omitted %>%
-        select(short_desc) %>% 
-        unlist() %>% 
-        paste(collapse = "; ")
+    select(short_desc) %>% 
+    unlist() %>% 
+    paste(collapse = "; ")
   if(omitted == "") {omitted <- "none"}
   omitted <- paste("The following variables were omitted due to missing information:", omitted)
-
+  
   
   # Adding on to lollipop chart
   lollipop <- lollipop +
@@ -145,8 +149,8 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
     geom_point(aes(x=short_desc, y=Value_2022, color=change_pct,
                    text = paste(x_label2, comma(Value_2022), sep = "")), size=4) +
     scale_color_gradient2(low = "darkred", mid = "#FFFF33", high = "darkgreen", midpoint = 0)  +
-    coord_flip()+
-    labs(paste("YEAR OVER YEAR CHANGE:", sub_label)) +
+    coord_flip() +
+    labs(title = paste("YEAR OVER YEAR CHANGE:", sub_label)) +
     xlab("") +
     ylab(y_label) +
     scale_y_continuous(
@@ -160,7 +164,5 @@ lollipop_chart <- function(variable = "commodities", state_input = NA, size_inpu
           axis.ticks.x = element_blank())
   
   plotly(lollipop, tooltip = c("text")) +
-    layout(hovermode = "y unified")
+   layout(hovermode = "y unified")
 }
-
-
