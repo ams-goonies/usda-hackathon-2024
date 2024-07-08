@@ -53,8 +53,9 @@ get_commodity_sales_proportions <- function(geographic_level='STATE',
   # Retrieving missing AQUACULTURE commodities from a separate category
   # note: in a separate pull as data exceeds API limit if category is not specified
   commodities_distr <- tidyUSDA::getQuickstat(
-    category='SALES & DISTRIBUTION',
+    #category='SALES & DISTRIBUTION',
     state = state,
+    #sector = "ANIMALS & PRODUCTS",
     county = county,
     key = Sys.getenv("AG_CENSUS_API_KEY"),
     program = 'CENSUS',
@@ -65,37 +66,47 @@ get_commodity_sales_proportions <- function(geographic_level='STATE',
       !grepl('AND SALES &', domaincat_desc),
       unit_desc == "$"
     )
+  
+  if (nrow(commodities_distr) > 0) {
+    if (geographic_level == 'STATE'){
+      commodities_distr <- commodities_distr %>%
+        mutate(county_name= "All") %>%
+        filter(
+          #grepl("SALES, MEASURED IN", short_desc),
+          grepl('FARM SALES:', domaincat_desc),
+          !grepl('AND SALES:', domaincat_desc),
+        ) %>%
+        categorize_by_size()
+    } else if (geographic_level == 'COUNTY') {
+      commodities_distr$farm_size = 'All'
+    }
     
-  if (geographic_level == 'STATE'){
     commodities_distr <- commodities_distr %>%
-      mutate(county_name= "All") %>%
-      filter(
-        #grepl("SALES, MEASURED IN", short_desc),
-        grepl('FARM SALES:', domaincat_desc),
-        !grepl('AND SALES:', domaincat_desc),
-      ) %>%
-      categorize_by_size()
-  } else if (geographic_level == 'COUNTY') {
-    commodities_distr$farm_size = 'All'
+      group_by(state_name, county_name, short_desc, group_desc, commodity_desc,
+               farm_size, year) %>%
+      summarize(Value = sum(Value, na.rm = TRUE), .groups = 'drop') %>%
+      select(year, state_name, county_name, group_desc, commodity_desc, 
+             short_desc, Value, farm_size) %>%
+      mutate(across(c(Value), ~ na_if(., 0)))
+    
+    distr_totals <- commodities_distr %>%
+      group_by(year, state_name, county_name, group_desc, commodity_desc, short_desc) %>%
+      summarize(Value = sum(Value, na.rm = TRUE), .groups = 'drop') %>%
+      mutate(
+        farm_size = "All",
+        across(c(Value), ~ na_if(., 0))
+      )
+    
+    commodities_distr <- bind_rows(commodities_distr, distr_totals)
+    
+    # Combine all commodities into 1 dataset
+    commodities <- rbind(commodities_sales, commodities_distr)
+    
+  } else {
+    commodities <- commodities_sales
   }
-  
-  commodities_distr <- commodities_distr %>%
-    group_by(state_name, county_name, short_desc, group_desc, commodity_desc,
-             farm_size, year) %>%
-    summarize(Value = sum(Value, na.rm = TRUE), .groups = 'drop') %>%
-    select(year, state_name, county_name, group_desc, commodity_desc, 
-           short_desc, Value, farm_size)
-  
-  distr_totals <- commodities_distr %>%
-    group_by(year, state_name, county_name, group_desc, commodity_desc, short_desc) %>%
-    summarize(Value = sum(Value, na.rm = TRUE), .groups = 'drop') %>%
-    mutate(farm_size = "All")
-  
-  commodities_distr <- bind_rows(commodities_distr, distr_totals)
-  
-  # Combine all commodities into 1 dataset
-  commodities <- rbind(commodities_sales, commodities_distr)
-  
+    
+
   # Retrieve commodity totals
   geo_totals <-  tidyUSDA::getQuickstat(
     group = 'INCOME',
@@ -273,7 +284,6 @@ state_list <- readRDS('data/finalized/state_sales_totals.rds') %>%
 full_state_dfs <- list()
 
 for (i in 1:length(state_list)) {
-  #items_dfs <- list()
   if (file.exists('data/ready_for_app/county_sales_proportions.rds')) {
     existing <- readRDS('data/ready_for_app/county_sales_proportions.rds')
   } else {
@@ -287,10 +297,32 @@ for (i in 1:length(state_list)) {
   }
   #for (j in 1:length(items)){
   print(paste0("Getting county-level sales proportions data for ", state_list[i]))
-  d <- get_commodity_sales_proportions(geographic_level = "COUNTY",
-                            state = state_list[i])
-  #items_dfs[[j]] <- d
-  #}
+  
+  #if (state_list[i] %in% c('GEORGIA', 'TEXAS', 'UTAH')) {
+  county_dfs <- list()
+  counties <- readRDS("data/finalized/county_demographics.rds") %>%
+    filter(state_name == state_list[i]) %>%
+    select(county_name) %>%
+    distinct() %>%
+    pull(county_name)
+  for (c in 1:length(counties)){
+    print(paste0("getting data for ", counties[c]))
+    
+    county <- get_commodity_sales_proportions(geographic_level = "COUNTY",
+                                         state = state_list[i],
+                                         county = counties[c]
+    )
+    county_dfs[[c]] <- county
+    #}
+    
+  d <- bind_rows(county_dfs)
+    
+  # } else {
+  #   d <- get_commodity_sales_proportions(geographic_level = "COUNTY",
+  #                                        state = state_list[i])
+  # }
+
+  }
   full_state_dfs[[i]] <- d #bind_rows(items_dfs)
   county_proportions <- bind_rows(full_state_dfs)
   
@@ -303,4 +335,66 @@ for (i in 1:length(state_list)) {
   }
   
 }
+
+
+
+### fill in some missing rows with NAs
+county_data <- readRDS('data/ready_for_app/county_sales_proportions.rds')
+#counts <- count(county_data, state_name)
+
+states <- list()
+all_counties <- list()
+
+for (i in 1:length(unique(county_data$state_name))) {
+  state <- unique(county_data$state_name)[i]
+  counties_tigris <- toupper(tigris::list_counties(state)$county)
+  counties_usda <- county_data %>%
+    filter(state_name == state) %>%
+    select(county_name) %>%
+    distinct() %>%
+    pull(county_name)
+  counties_diff <- setdiff(counties_tigris, counties_usda)
+  counties_full <- c(counties_usda, counties_diff)
+  all_counties <- unlist(c(all_counties, counties_full))
+  state_rep <- rep(state, length(counties_full))
+  states <- unlist(c(states, state_rep))
+}
+
+unique_cats <- unique(county_data$short_desc)
+
+states_full <- rep(states, length(unique_cats))
+counties_full <- rep(all_counties, length(unique_cats))
+cats <- rep(unique_cats, length(all_counties))
+
+empties <- data.frame(
+  state_name = states_full,
+  county_name = counties_full) %>%
+  arrange(state_name, county_name) %>%
+  mutate(
+    short_desc = cats,
+    farm_size = "All",
+    metric = "percent of total",
+    Value_2017 = NA,
+    Value_2022 = NA,
+    change = NA,
+    change_pct = NA
+  )
+
+county_data_full <- bind_rows(county_data, empties) %>%
+  group_by(state_name, county_name, short_desc, farm_size, metric) %>%
+  summarize(
+    Value_2017 = sum(Value_2017, na.rm = TRUE),
+    Value_2022 = sum(Value_2022, na.rm = TRUE),
+    change = sum(change, na.rm = TRUE),
+    change_pct = sum(change_pct, na.rm = TRUE),
+    across(c(Value_2017, Value_2022, change, change_pct), ~ na_if(., 0)),
+    .groups = 'drop',
+  )
+
+
+saveRDS(county_data_full, 'data/finalized/county_sales_proportions.rds')
+
+
+
+
         
