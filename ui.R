@@ -10,34 +10,45 @@ ui <- page_fillable(
   layout_columns(
     card(
       card_header("User Inputs"),
+      textOutput('dataDims'),
+      
       selectInput(
         inputId = "stateSelector",
-        label = "Choose a state:",
-        choices = c(dci_state$State, "(No state selected)"),
-        selected = "(No state selected)"
+        label = "State:",
+        choices = c(ALL_STATES, "All states"),
+        selected = "All states"
       ),
-      selectInput(
-        inputId = "countySelector",
-        label = "Choose a county:",
-        choices = c("(select a state above to view counties)")#,#c(dci_state$State, "(No state selected)"),
-        #selected = "(No state selected)"
-      ),
+      
+      textOutput('stateSelected'),
+      # selectInput(
+      #   inputId = "countySelector",
+      #   label = "County:",
+      #   choices = c("(select a state above to view counties)")
+      # ),
+      # selectInput(
+      #   inputId = "commoditySelector",
+      #   label = "Commodity:",
+      #   choices = c("(select a state above to view commodities)")
+      # ),
       selectInput(
         inputId = "metricSelector",
         label = "Metric to view:",
-        choices = c("Total sales",
-                    "Acres in production",
-                    "Number of farms"
-        )#,#c(dci_state$State, "(No state selected)"),
-        #selected = "(No state selected)"
+        choices = STATE_METRICS
       ),
-      selectInput(
-        inputId = "demographicSelector",
-        label = "Demographic metric:",
-        choices = c("Female", "Veteran", "Native American")#,#c(dci_state$State, "(No state selected)"),
-        #selected = "(No state selected)"
-      )
+      textOutput('metricSelected'),
       
+      # selectInput(
+      #   inputId = "demographicSelector",
+      #   label = "Demographic metric:",
+      #   choices = c("(select a state above to view demographics)")
+      # ),
+      selectInput(
+        inputId = "sizeSelector",
+        label = "Farm size:",
+        choices = c("Small", "Not small", "All"),
+        selected = 'All'
+      ),
+      textOutput('sizeSelected')
     ),
     card(
       card_header("Map"),
@@ -50,7 +61,10 @@ ui <- page_fillable(
       card_header("Plot"),
       plotOutput('fake_map')
       ),
-    card(card_header("Table")),
+    card(
+      card_header("Table"),
+      reactableOutput('data_table')
+      ),
     col_widths = c(4, 8)
   )
   
