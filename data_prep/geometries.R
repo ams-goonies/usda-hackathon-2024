@@ -24,7 +24,7 @@ state_geos <- d %>%
 
 
 ## county geometries
-state_geos <- readRDS('data/finalized/state_geometries.rds')
+#state_geos <- readRDS('data/finalized/state_geometries.rds')
 state_list <- state_geos %>%
   st_drop_geometry() %>%
   pull(state_name)
@@ -53,6 +53,8 @@ for (i in 1:length(state_list)) {
 
 county_geos <- bind_rows(state_dfs)
 
-ALL_GEOS <- bind_rows(state_geos, county_geos)
+ALL_GEOS <- bind_rows(state_geos, county_geos) %>%
+  st_transform(4326)
+
 st_write(ALL_GEOS, 'data/finalized/ALL_GEOS.shp')
 
