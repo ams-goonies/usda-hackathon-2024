@@ -1,6 +1,9 @@
 library(dplyr)
 library(reactable)
 
+state_demographics <- readRDS('data/finalized/ALL_DATA.rds') %>%
+  filter(county_name == "All")
+
 demdata <- state_demographics %>%
   select(state_name, short_desc, farm_size, Value_2017, Value_2022, change_pct)
 
