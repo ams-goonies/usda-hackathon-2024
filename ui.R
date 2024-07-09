@@ -1,6 +1,7 @@
 library(shiny)
 library(leaflet)
 library(bslib)
+library(reactable)
 
 
 ui <- page_fillable(

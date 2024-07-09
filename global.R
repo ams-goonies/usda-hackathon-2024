@@ -9,8 +9,11 @@ library(leaflet)
 library(tidyUSDA)
 library(shinyWidgets)
 library(sf)
+library(DBI)
 
-ALL_DATA <- readRDS('data/finalized/ALL_DATA.rds')
+CENSUS_DB <- dbConnect(RSQLite::SQLite(), "census_data.db")
+ALL_DATA <- tbl(CENSUS_DB, "all_data")
+
 ALL_GEOMS <- st_read('data/finalized/ALL_GEOS.shp') %>%
   rename(
     state_name = stat_nm,

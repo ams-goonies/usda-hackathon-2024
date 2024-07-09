@@ -6,14 +6,6 @@ library(reactable)
 # Define server logic required to draw a histogram
 function(input, output, session) {
   
-  # observe(
-  #   updateSelectInput(
-  #     session, 
-  #     "commoditySelector", 
-  #     choices = get_commodity_list(input$stateSelector, input$countySelector)
-  #   )
-  # )
-  
   observe(
     updateSelectInput(
       session,
@@ -22,50 +14,27 @@ function(input, output, session) {
     )
   )
   
-  # observe(
-  #   if (input$stateSelector == "(No state selected)") {
-  #     updateSelectInput(
-  #       session, 
-  #       "sizeSelector", 
-  #       choices = c("Small", "Not small", "All")
-  #     )
-  #   } else {
-  #     updateSelectInput(
-  #       session, 
-  #       "sizeSelector", 
-  #       choices = c("All")
-  #     )
-  #   }
-  # )
-
+  # build reactive SQL query iteratively
   d <- reactive({
 
     if (input$stateSelector == "All states") {
-      d <- ALL_DATA %>%
+      query <- ALL_DATA %>%
         filter(
           county_name == "All")
     } else {
-      d <- ALL_DATA %>%
+      query <- ALL_DATA %>%
         filter(
           county_name != "All",
           state_name == input$stateSelector
         )
     }
     
-    # if (input$countySelector != "(select a state above to view counties)") {
-    #   d <- d %>%
-    #     filter(county_name == input$countySelector)
-    # }
-    
-    # if (input$metricSelector == "(select a state above to view metrics)") {
-    #   d <- d %>%
-    #     filter(
-    #       short_desc = "CROP TOTALS - SALES, MEASURED IN $"
-    #     )
-    # } else {
-    d <- d %>%
+    query <- query %>%
       filter(short_desc == input$metricSelector,
-             farm_size == input$sizeSelector) 
+             farm_size == input$sizeSelector)
+    
+    # execute query
+    d <- query %>% collect()
     
     ALL_GEOMS %>%
       merge(d, by = c("state_name", "county_name"))
