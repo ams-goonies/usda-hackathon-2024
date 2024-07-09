@@ -128,8 +128,30 @@ function(input, output, session) {
       arrange(desc(Value_2022)) %>%
       slice(1:10)
     
-    ggplot(d, aes(x = state_name, y = Value_2022)) +
-      geom_bar(stat = 'identity') +
+    ggplot(d) +
+      geom_point(
+        aes(
+          x = state_name,
+          y = Value_2022
+        ),
+        color = 'red'
+      ) +
+      geom_point(
+        aes(
+          x = state_name,
+          y = Value_2017
+        ),
+        color = 'blue'
+      ) +
+      geom_segment(
+        aes(
+          x = state_name,
+          xend = state_name,
+          y = Value_2017,
+          yend = Value_2022
+        ),
+        color = 'grey'
+      ) +
       coord_flip()
     
     

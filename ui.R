@@ -6,21 +6,29 @@ library(reactable)
 
 ui <- page_fillable(
   
-  title = "USDA Ag Census Data Explorer",
+  includeCSS("www/my_style.css"),
+  
+  h2("USDA Ag Census Data Explorer"),
   
   layout_columns(
+    
     card(
-      card_header("User Inputs"),
-      textOutput('dataDims'),
+      class = 'input-card',
+      #height = 450,
+      card_header(
+        class = 'input-card',
+        "User Inputs"),
+      #textOutput('dataDims'),
       
       selectInput(
         inputId = "stateSelector",
         label = "State:",
         choices = c(ALL_STATES, "All states"),
-        selected = "All states"
+        selected = "All states",
+        width = '100%'
       ),
       
-      textOutput('stateSelected'),
+      #textOutput('stateSelected'),
       # selectInput(
       #   inputId = "countySelector",
       #   label = "County:",
@@ -34,9 +42,10 @@ ui <- page_fillable(
       selectInput(
         inputId = "metricSelector",
         label = "Metric to view:",
-        choices = STATE_METRICS
+        choices = STATE_METRICS,
+        width = '100%'
       ),
-      textOutput('metricSelected'),
+      #textOutput('metricSelected'),
       
       # selectInput(
       #   inputId = "demographicSelector",
@@ -47,26 +56,35 @@ ui <- page_fillable(
         inputId = "sizeSelector",
         label = "Farm size:",
         choices = c("Small", "Not small", "All"),
-        selected = 'All'
+        selected = 'All',
+        width = '100%'
       ),
-      textOutput('sizeSelected')
+      #textOutput('sizeSelected')
     ),
     card(
-      card_header("Map"),
-      leafletOutput('mapview')
+      #height = 450,
+      full_screen = TRUE,
+      card_header(
+        "Total commodity sales for all states"
+        ),
+      card_body(
+        leafletOutput('mapview')
+      )
     ),
-    col_widths = c(4, 8)
+    col_widths = c(5, 7),
+    height = '50%'
   ),
   layout_columns(
     card(
-      card_header("Plot"),
+      card_header("Year over Year Producers Change"),
       plotOutput('lollipop')
       ),
     card(
-      card_header("Table"),
+      card_header("Commodity Sales by State"),
       reactableOutput('table')
       ),
-    col_widths = c(4, 8)
+    col_widths = c(5, 7),
+    height = '50%'
   )
   
 )
