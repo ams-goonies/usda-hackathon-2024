@@ -16,7 +16,6 @@ function(input, output, session) {
   
   # build reactive SQL query iteratively
   d <- reactive({
-
     if (input$stateSelector == "All states") {
       query <- ALL_DATA %>%
         filter(
@@ -124,25 +123,21 @@ function(input, output, session) {
   })
   
   
-  # output$fake_map <- renderPlot({
-  #   # Sample data set
-  #   set.seed(1)
-  #   df <- data.frame(x = LETTERS[1:10],
-  #                    y = sample(20:35, 10, replace = TRUE))
-  #   
-  #   ggplot(df, aes(x = x, y = y)) +
-  #     geom_segment(aes(x = x, xend = x, y = 0, yend = y),
-  #                  color = "gray", lwd = 1) +
-  #     geom_point(size = 7.5, pch = 21, bg = 4, col = 1) +
-  #     geom_text(aes(label = y), color = "white", size = 3) +
-  #     scale_x_discrete(labels = paste0("G_", 1:10)) +
-  #     coord_flip() +
-  #     theme_minimal()
-  #   
-  # })
+  output$lollipop <- renderPlot({
+    d <- d() %>%
+      arrange(desc(Value_2022)) %>%
+      slice(1:10)
+    
+    ggplot(d, aes(x = state_name, y = Value_2022)) +
+      geom_bar(stat = 'identity') +
+      coord_flip()
+    
+    
+
+  })
   
   
-  output$data_table <- renderReactable({
+  output$table <- renderReactable({
     format_color <- function(value) {
       if (is.na(value)) return(NULL)
       

@@ -60,11 +60,11 @@ ui <- page_fillable(
   layout_columns(
     card(
       card_header("Plot"),
-      plotOutput('fake_map')
+      plotOutput('lollipop')
       ),
     card(
       card_header("Table"),
-      reactableOutput('data_table')
+      reactableOutput('table')
       ),
     col_widths = c(4, 8)
   )
