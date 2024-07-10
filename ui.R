@@ -10,7 +10,7 @@ ui <- page_fillable(
   
   includeCSS("www/my_style.css"),
   
-  h2("USDA Ag Census Data Explorer"),
+  h2(HTML('<img src="usda-logo-color.svg" height="60" style="padding-right:20px" >AgCensus Data Explorer')),
   
   layout_columns(
     

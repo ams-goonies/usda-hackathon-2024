@@ -31,7 +31,7 @@ function(input, output, session) {
     extent2 <- ifelse(input$stateSelector == 'ALL STATES', "", 
                       paste(" for", input$stateSelector))
     
-    print(paste0(input$metricSelector, ": ", extent1, " data for 2017 and 2022 ", 
+    print(paste0(input$metricSelector, ": ", extent1, "data for 2017 and 2022 ", 
                  extent2))
   })
   
