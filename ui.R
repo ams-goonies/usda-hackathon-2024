@@ -2,6 +2,8 @@ library(shiny)
 library(leaflet)
 library(bslib)
 library(reactable)
+library(plotly)
+library(shinyWidgets)
 
 
 ui <- page_fillable(
@@ -23,8 +25,8 @@ ui <- page_fillable(
       selectInput(
         inputId = "stateSelector",
         label = "State:",
-        choices = c(ALL_STATES, "All states"),
-        selected = "All states",
+        choices = c("ALL STATES", ALL_STATES),
+        selected = "ALL STATES",
         width = '100%'
       ),
       
@@ -42,7 +44,7 @@ ui <- page_fillable(
       selectInput(
         inputId = "metricSelector",
         label = "Metric to view:",
-        choices = STATE_METRICS,
+        choices = c("PRODUCERS, (ALL), FEMALE - NUMBER OF PRODUCERS"),
         width = '100%'
       ),
       #textOutput('metricSelected'),
@@ -52,13 +54,28 @@ ui <- page_fillable(
       #   label = "Demographic metric:",
       #   choices = c("(select a state above to view demographics)")
       # ),
-      selectInput(
+      # selectInput(
+      #   inputId = "sizeSelector",
+      #   label = "Farm size:",
+      #   choices = c("Small", "Not small", "All"),
+      #   selected = 'All',
+      #   width = '100%'
+      # ),
+      
+      awesomeRadio(
         inputId = "sizeSelector",
-        label = "Farm size:",
-        choices = c("Small", "Not small", "All"),
-        selected = 'All',
-        width = '100%'
-      ),
+        label = "Filter by farm size:", 
+        choices = c("All farms" = 'All',
+                    "Small farms only (sales <= $250k/yr.)" = 'Small'
+                    ),
+        selected = "All",
+        status = "warning"
+      )#,
+      
+      # actionButton(
+      #   inputId = "updateButton",
+      #   label = "GET THE DATA"
+      # )
       #textOutput('sizeSelected')
     ),
     card(

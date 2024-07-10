@@ -1,113 +1,179 @@
 library(shiny)
 library(leaflet)
 library(dplyr)
+library(dbplyr)
 library(reactable)
+library(paletteer)
+library(glue)
+library(scales)
+library(hrbrthemes)
+library(plotly)
 
-# Define server logic required to draw a histogram
 function(input, output, session) {
   
-  observe(
+  observeEvent(input$stateSelector,{
     updateSelectInput(
       session,
       "metricSelector",
-      choices = get_metric_list(input$stateSelector)
+      choices = get_metrics_list(input$stateSelector)
     )
-  )
-  
-  # build reactive SQL query iteratively
-  d <- reactive({
-    if (input$stateSelector == "All states") {
-      query <- ALL_DATA %>%
-        filter(
-          county_name == "All")
-    } else {
-      query <- ALL_DATA %>%
-        filter(
-          county_name != "All",
-          state_name == input$stateSelector
-        )
-    }
+  })
+
+  d <- eventReactive(
+    c(input$stateSelector,
+      input$metricSelector,
+      input$sizeSelector), {
+        
+    req(input$stateSelector)
+    req(input$metricSelector)
+    req(input$sizeSelector)
     
-    query <- query %>%
-      filter(short_desc == input$metricSelector,
-             farm_size == input$sizeSelector)
-    
-    # execute query
-    d <- query %>% collect()
-    
-    ALL_GEOMS %>%
-      merge(d, by = c("state_name", "county_name"))
+    get_census_data(
+      state = input$stateSelector,
+      #county = input$countySelector,
+      desc = input$metricSelector,
+      size = input$sizeSelector
+    )
   })
   
-  output$stateSelected <- renderText({
-    input$stateSelector
+  pal17 <- reactive({
+    colorNumeric("YlGnBu", domain = d()$Value_2017)
   })
   
-  output$metricSelected <- renderText({
-    input$metricSelector
+  pal22 <- reactive({
+    colorNumeric("YlGnBu", domain = d()$Value_2022)
   })
   
-  output$sizeSelected <- renderText({
-    input$sizeSelector
+  pal_delta <- reactive({
+    delta_colors <- as.vector(paletteer_d("MexBrewer::Revolucion"))
+    colorNumeric(palette = delta_colors, domain = d()$change_pct)
   })
   
-  output$dataDims <- renderText({
-    dim(d())
+  pal_delta_rev <- reactive({
+    delta_colors <- as.vector(paletteer_d("MexBrewer::Revolucion"))
+    colorNumeric(palette = delta_colors, domain = d()$change_pct,
+                 reverse = TRUE)
   })
-  
   
   output$mapview <- renderLeaflet({
-    #browser()
-    d <- d()
-    # map_pal_17 <- colorNumeric("YlGnBu", domain = d$Value_2017)
-    # map_pal_22 <- colorNumeric("plasma", domain = d$Value_2017)
-    # map_pal_delta <- colorNumeric("viridis", domain = d$Value_2017)
+    pal17_init <- colorNumeric("YlGnBu", domain = D_INIT$Value_2017)
+    pal22_init <- colorNumeric("YlGnBu", domain = D_INIT$Value_2022)
+    delta_colors <- as.vector(paletteer_d("MexBrewer::Revolucion"))
+    pal_delta_init <- colorNumeric(palette = delta_colors, domain = D_INIT$change_pct)
+    pal_delta_init_rev <- colorNumeric(
+      palette = delta_colors,
+      domain = D_INIT$change_pct,
+      reverse = TRUE
+      )
     
     leaflet() %>%
       addProviderTiles(providers$CartoDB.Positron) %>%
-      setView(-95.7129, 37.0902, zoom = 4)
+      setView(-95.7129, 37.0902, zoom = 4) %>%
+      # addPolygons(
+      #   data = D_INIT,
+      #   fillColor = ~pal17_init(Value_2017),
+      #   fillOpacity = 0.7,
+      #   color = 'white',
+      #   opacity = 1,
+      #   weight = 1,
+      #   group = '2017 Data'
+      # ) %>%
+      # addPolygons(
+      #   data = D_INIT,
+      #   fillColor = ~pal22_init(Value_2022),
+      #   fillOpacity = 0.7,
+      #   color = 'white',
+      #   opacity = 1,
+      #   weight = 1,
+      #   group = '2022 Data'
+      # ) %>%
+      addPolygons(
+        data = D_INIT,
+        fillColor = ~pal_delta_init(change_pct),
+        fillOpacity = 0.7,
+        color = 'white',
+        opacity = 1,
+        weight = 1,
+        group = 'Change, 2017-2022',
+        popup = glue(
+          "<b>{D_INIT$state_name}</b><br/>",
+          "2017 value: {format(D_INIT$Value_2017, big.mark = ",", scientific = FALSE)}<br/>",
+          "2022 value: {prettyNum(D_INIT$Value_2022, big.mark = ",", scientific = FALSE)}<br/>",
+          "Change: {D_INIT$change_pct}%") %>%
+          lapply(htmltools::HTML)
+      ) %>%
+      addLegend("bottomright", pal = pal_delta_init_rev, values = D_INIT$change_pct,
+                title = "Change, 2017-2022",
+                labFormat = labelFormat(
+                  suffix = "%",
+                  transform = function(x) sort(x, decreasing = TRUE)
+                  ),
+                opacity = 1,
+                group = "Change, 2017-2022"
+                ) %>%
+      addLayersControl(
+        baseGroups = c("Change, 2017-2022", "2017 Data", "2022 Data"),
+        options = layersControlOptions(collapsed = FALSE)
+      )
   })
 
   observeEvent(d(), {
-    map_pal_17 <- colorNumeric("YlGnBu", domain = d()$Value_2017)
-    map_pal_22 <- colorNumeric("YlGnBu", domain = d()$Value_2022)
-    map_pal_delta <- colorNumeric("viridis", domain = d()$change_pct)
+    map_pal_17 <- pal17()
+    map_pal_22 <- pal22()
+    map_pal_delta <- pal_delta()
+    pal_delta_init_rev <- pal_delta_rev()
     
     m <- leafletProxy('mapview') %>%
-      clearGroup('states') %>%
-      addPolygons(
-        data = d(),
-        fillColor = ~map_pal_17(Value_2017),
-        fillOpacity = 0.7,
-        color = 'white',
-        opacity = 1,
-        weight = 3,
-        group = '2017 Data'
-      ) %>%
-      addPolygons(
-        data = d(),
-        fillColor = ~map_pal_22(Value_2022),
-        fillOpacity = 0.7,
-        color = 'white',
-        opacity = 1,
-        weight = 3,
-        group = '2022 Data'
-      ) %>%
+      clearGroup("Change, 2017-2022") %>%
+      clearControls() %>%
+      # addPolygons(
+      #   data = d(),
+      #   fillColor = ~map_pal_17(Value_2017),
+      #   fillOpacity = 0.7,
+      #   color = 'white',
+      #   opacity = 1,
+      #   weight = 3,
+      #   group = '2017 Data'
+      # ) %>%
+      # addPolygons(
+      #   data = d(),
+      #   fillColor = ~map_pal_22(Value_2022),
+      #   fillOpacity = 0.7,
+      #   color = 'white',
+      #   opacity = 1,
+      #   weight = 3,
+      #   group = '2022 Data'
+      # ) %>%
       addPolygons(
         data = d(),
         fillColor = ~map_pal_delta(change_pct),
         fillOpacity = 0.7,
         color = 'white',
         opacity = 1,
-        weight = 3,
-        group = 'Change, 2017-2022'
+        weight = 1,
+        group = 'Change, 2017-2022',
+        popup = glue(
+          "<b>{d()$state_name}</b><br/>",
+          "2017 value: {format(d()$Value_2017, big.mark = ",", scientific = FALSE)}<br/>",
+          "2022 value: {prettyNum(d()$Value_2022, big.mark = ",", scientific = FALSE)}<br/>",
+          "Change: {d()$change_pct}%") %>%
+          lapply(htmltools::HTML)
+      ) %>%
+      addLegend("bottomright", pal = pal_delta_init_rev, values = d()$change_pct,
+                title = "Change, 2017-2022",
+                labFormat = labelFormat(
+                  suffix = "%",
+                  transform = function(x) sort(x, decreasing = TRUE)
+                ),
+                opacity = 1,
+                group = "Change, 2017-2022"
       ) %>%
       addLayersControl(
-        baseGroups = c("2017 Data", "2022 Data", "Change, 2017-2022"),
+        baseGroups = c("Change, 2017-2022", "2017 Data", "2022 Data"),
         options = layersControlOptions(collapsed = FALSE)
       )
     
-    if (input$stateSelector == "All states"){
+    if (input$stateSelector == "ALL STATES"){
       m %>% setView(-95.7129, 37.0902, zoom = 4)
 
     } else {
@@ -124,42 +190,83 @@ function(input, output, session) {
   
   
   output$lollipop <- renderPlot({
-    d <- d() %>%
-      arrange(desc(Value_2022)) %>%
-      slice(1:10)
+    n <- 15
     
-    ggplot(d) +
+    d <- d() %>%
+      arrange(Value_2022) %>%
+      slice(1:n) %>%
+      mutate(state_name = factor(state_name, levels = state_name))
+    
+    sub_label <- paste("TOP", n, 
+                       #D_INIT$short_desc[1],
+                       input$metricSelector,
+                       ifelse(
+                         input$stateSelector == "ALL STATES", 
+                         "THE US", input$stateSelector), "FROM 2017 TO 2022")
+    
+    y_label <- "Sales, Measured in $"
+    x_label1 <- "Sales in 2017: $"
+    x_label2 <- "Sales in 2022: $"
+    
+    lollipop <- ggplot(d) +
       geom_point(
         aes(
           x = state_name,
-          y = Value_2022
+          y = Value_2022,
+          color = change_pct#,
+          #text = paste(x_label1, comma(Value_2022), sep = "")
         ),
-        color = 'red'
+        size = 4
       ) +
       geom_point(
         aes(
           x = state_name,
-          y = Value_2017
+          y = Value_2017,
+          color=change_pct#,
+          #text = paste(x_label1, comma(Value_2017), sep = "")
         ),
-        color = 'blue'
+        size = 2
       ) +
       geom_segment(
         aes(
           x = state_name,
           xend = state_name,
           y = Value_2017,
-          yend = Value_2022
+          yend = Value_2022,
+          color = change_pct#,
+          # text = paste(
+          #   short_desc, "\nPercentage Change:", sprintf("%.2f%%", change_pct))
         ),
-        color = 'grey'
+        linewidth = 1.5
       ) +
-      coord_flip()
+      scale_color_gradient2(low = "darkred", mid = "#FFFF33", high = "darkgreen", midpoint = 0)  +
+      coord_flip() +
+      #labs(title = paste("YEAR OVER YEAR CHANGE:", sub_label)) +
+      xlab("") +
+      ylab(y_label) +
+      scale_y_continuous(
+        labels = label_number(scale_cut = cut_short_scale())
+      ) +
+      theme_ipsum() +
+      theme(legend.position = "none",
+            panel.grid.major = element_blank(),
+            panel.grid.minor = element_blank(),
+            panel.border = element_blank(),
+            axis.ticks.x = element_blank())
     
-    
+    lollipop
+    #ggplotly(lollipop, tooltip = c("x", 'y', 'color')) %>% config(displayModeBar = FALSE)# +
+      #layout(hovermode = "y unified")
 
   })
   
   
   output$table <- renderReactable({
+    
+    d <- d() %>%
+      st_drop_geometry() %>%
+      arrange(desc(Value_2022))
+    
     format_color <- function(value) {
       if (is.na(value)) return(NULL)
       
@@ -174,31 +281,35 @@ function(input, output, session) {
       list(backgroundColor = color)
     }
     
-    reactable(d() %>% st_drop_geometry(), 
-              columns = list(
-                state_name = colDef(name = "State"),
-                short_desc = colDef(name = "Demographic"),
-                farm_size = colDef(name = "Farm Size"),
-                Value_2017 = colDef(
-                  name = "2017 Sales",
-                  format = colFormat(prefix = "$", separators = TRUE, digits = 0)
-                ),
-                Value_2022 = colDef(
-                  name = "2022 Sales",
-                  format = colFormat(prefix = "$", separators = TRUE, digits = 0)
-                ),
-                change_pct = colDef(
-                  name = "Change in Sales",
-                  cell = function(value) {
-                    if (is.na(value)) return(NA)
-                    sprintf("%.2f%%", value)
-                  },
-                  style = function(value) format_color(value),
-                  align = "right"
-                )
-              )
-    )  })
+    # d <- d() %>%
+    #   st_drop_geometry() %>%
+    #   arrange(desc(Value_2022))
     
-    
-
+    reactable(
+      d, 
+      columns = list(
+        state_name = colDef(name = "State"),
+        short_desc = colDef(show = FALSE),
+        metric = colDef(show = FALSE),
+        farm_size = colDef(name = "Farm Size"),
+        Value_2017 = colDef(
+          name = "2017 Sales",
+          format = colFormat(prefix = "$", separators = TRUE, digits = 0)
+        ),
+        Value_2022 = colDef(
+          name = "2022 Sales",
+          format = colFormat(prefix = "$", separators = TRUE, digits = 0)
+        ),
+        change_pct = colDef(
+          name = "Change in Sales",
+          cell = function(value) {
+            if (is.na(value)) return(NA)
+            sprintf("%.2f%%", value)
+          },
+          style = function(value) format_color(value),
+          align = "right"
+        )
+      )
+    )  
+  })
 }
