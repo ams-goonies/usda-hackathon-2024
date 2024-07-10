@@ -18,10 +18,9 @@ ui <- page_fillable(
       class = 'input-card',
       #height = 450,
       card_header(
-        class = 'input-card',
-        "User Inputs"),
-      #textOutput('dataDims'),
-      
+        class = 'input-card'
+        ),
+
       selectInput(
         inputId = "stateSelector",
         label = "State:",
@@ -82,7 +81,7 @@ ui <- page_fillable(
       #height = 450,
       full_screen = TRUE,
       card_header(
-        "Total commodity sales for all states"
+        uiOutput('map_header')
         ),
       card_body(
         leafletOutput('mapview')
@@ -93,11 +92,16 @@ ui <- page_fillable(
   ),
   layout_columns(
     card(
-      card_header("Year over Year Producers Change"),
+      card_header(
+        uiOutput('plot_header')
+        ),
       plotOutput('lollipop')
       ),
     card(
-      card_header("Commodity Sales by State"),
+      card_header(
+        uiOutput('table_header')
+        
+        ),
       reactableOutput('table')
       ),
     col_widths = c(5, 7),

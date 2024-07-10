@@ -11,6 +11,30 @@ library(plotly)
 
 function(input, output, session) {
   
+  
+  output$map_header <- renderUI({
+    extent <- ifelse(input$stateSelector == "ALL STATES", "per state",
+                     paste("per county in", input$stateSelector))
+    print(paste("Total", input$metricSelector, extent))
+  })
+  
+  output$plot_header <- renderUI({
+    extent <- ifelse(input$stateSelector == "ALL STATES", "states",
+                     paste("counties in", input$stateSelector))
+    print(paste("15", extent, "with the greatest change in", 
+                input$metricSelector, ", 2017-2022"))
+  })
+  
+  output$table_header <- renderUI({
+    extent1 <- ifelse(input$stateSelector == "ALL STATES", "State-level",
+                     "County-level")
+    extent2 <- ifelse(input$stateSelector == 'ALL STATES', "", 
+                      paste(" for", input$stateSelector))
+    
+    print(paste0(input$metricSelector, ": ", extent1, " data for 2017 and 2022 ", 
+                 extent2))
+  })
+  
   observeEvent(input$stateSelector,{
     updateSelectInput(
       session,
