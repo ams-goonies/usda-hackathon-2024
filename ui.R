@@ -47,7 +47,7 @@ ui <- page_fillable(
       selectInput(
         inputId = "metricSelector",
         label = "Metric to view:",
-        choices = c("placeholder"),
+        choices = c("COMMODITY TOTALS - SALES, MEASURED IN $"),
         width = '100%'
       ),
       textOutput('metricSelected'),

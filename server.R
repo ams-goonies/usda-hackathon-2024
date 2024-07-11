@@ -379,7 +379,8 @@ function(input, output, session) {
       xlab("") +
       ylab("") +
       scale_y_continuous(
-        labels = label_number(scale_cut = cut_short_scale()),
+        labels = scales::label_percent(scale = 1),
+        #labels = label_number(scale_cut = cut_short_scale()),
         expand = c(0, 0)
       ) +
       theme_ipsum() +
@@ -420,15 +421,20 @@ function(input, output, session) {
       if (is.na(value)) return(NULL)
       
       if (value > 0) {
-        color <- "rgba(0, 255, 0, 0.2)" 
+        color <- "#244E57FF" 
       } else if (value < 0) {
-        color <- "rgba(255, 0, 0, 0.2)"
+        color <- "#AF2213FF"
+      } else if (value == 0) {
+        color <- "#F0F6EBFF"
       } else {
         color <- "transparent"
       }
       
-      list(backgroundColor = color)
+      list(
+        backgroundColor = color)
     }
+    
+    orange_pal <- function(x) rgb(colorRamp(c("#D9792EFF", "#F0F6EBFF", "#368990FF"))(x), maxColorValue = 255)
     
     reactable(
       d, 
@@ -444,13 +450,34 @@ function(input, output, session) {
           name = "2022 Sales",
           format = colFormat(prefix = "$", separators = TRUE, digits = 0)
         ),
+        change = colDef(
+          name = "Change",
+          format = colFormat(prefix = "$", separators = TRUE, digits = 0),
+          style = function(value) {
+            if(is.na(value)){
+              color <- 'grey85'
+            } else {
+              normalized <- (value - min(d$change, na.rm = TRUE)) / (max(d$change, na.rm = TRUE) - min(d$change, na.rm = TRUE))
+              color <- orange_pal(normalized)
+            }
+            list(background = color)
+          }
+        ),
         change_pct = colDef(
           name = "Change in Sales",
           cell = function(value) {
             if (is.na(value)) return(NA)
             sprintf("%.2f%%", value)
           },
-          style = function(value) format_color(value),
+          style = function(value) {
+            if(is.na(value)){
+              color <- 'grey85'
+            } else {
+              normalized <- (value - min(d$change_pct, na.rm = TRUE)) / (max(d$change_pct, na.rm = TRUE) - min(d$change_pct, na.rm = TRUE))
+              color <- orange_pal(normalized)
+            }
+            list(background = color)
+          },
           align = "right"
         )
       )
