@@ -5,11 +5,11 @@ library(sf)
 # source('get_metrics_list2.R')
 # source('get_state_list2.R')
 
-Sys.setenv("LARES_FONT" = "ignore")
-library(sysfonts)
-sysfonts::font_add(family = 'Arial Narrow', regular = 'arialnarrow.ttf')
-library(systemfonts)
-systemfonts::register_font("Arial Narrow", plain = 'arialnarrow.ttf')
+# Sys.setenv("LARES_FONT" = "ignore")
+# library(sysfonts)
+# sysfonts::font_add(family = 'Arial Narrow', regular = 'arialnarrow.ttf')
+# library(systemfonts)
+# systemfonts::register_font("Arial Narrow", plain = 'arialnarrow.ttf')
 
 sf_use_s2(FALSE)
 

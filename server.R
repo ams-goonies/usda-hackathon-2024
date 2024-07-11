@@ -15,7 +15,7 @@ library(fontawesome)
 function(input, output, session) {
   
   # debugging help
-  output$stateSelected <- renderText(input$stateSelector)
+  outputf$stateSelected <- renderText(input$stateSelector)
   output$catSelected <- renderText(input$categorySelector)
   output$metricSelected <- renderText(input$metricSelector)
   output$sizeSelected <- renderText(input$sizeSelector)
@@ -74,18 +74,18 @@ function(input, output, session) {
   observe({
     state <- ifelse(isTruthy(input$stateSelector) == FALSE, 'ALL STATES', 
                     input$stateSelector)
-    print(paste("state:", state))
+    #print(paste("state:", state))
     metric <- ifelse(isTruthy(input$metricSelector) == FALSE, 
                      "PRODUCERS, (ALL), FEMALE - NUMBER OF PRODUCERS", 
                      input$metricSelector)
-    print(paste("metric:", metric))
+    #print(paste("metric:", metric))
     
     size <- ifelse(isTruthy(input$sizeSelector) == FALSE, 'All', 
                    input$sizeSelector)
     
     size <- ifelse(input$sizeSelector != TRUE, "All", "Small")
     #print(size)
-    print(paste("size:", size))
+    #print(paste("size:", size))
     
     d(
       get_census_data(
