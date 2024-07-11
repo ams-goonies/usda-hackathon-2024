@@ -8,7 +8,8 @@ library(glue)
 library(scales)
 library(hrbrthemes)
 library(htmltools)
-#library(plotly)
+library(ggiraph)
+library(plotly)
 
 function(input, output, session) {
   
@@ -26,7 +27,6 @@ function(input, output, session) {
   )
   
   observe({
-    
     metrics_available(
       get_metrics_list(
         state = ifelse(isTruthy(input$stateSelector), input$stateSelector, "ALL STATES"),
@@ -335,13 +335,13 @@ function(input, output, session) {
           county_name = factor(county_name, levels = county_name)
           )
     }
-
-    y_label <- ifelse(grepl("SALES", input$metricSelector), 
-                      "Sales, Measured in $", "Number of producers")
-    x_label1 <- ifelse(grepl("SALES", input$metricSelector), 
-                       "Sales in 2017: $", "Number in 2017") 
-    x_label2 <- ifelse(grepl("SALES", input$metricSelector), 
-                       "Sales in 2022: $", "Number in 2022")
+# 
+#     y_label <- ifelse(grepl("SALES", input$metricSelector), 
+#                       "Sales, Measured in $", "Number of producers")
+#     x_label1 <- ifelse(grepl("SALES", input$metricSelector), 
+#                        "Sales in 2017: $", "Number in 2017") 
+#     x_label2 <- ifelse(grepl("SALES", input$metricSelector), 
+#                        "Sales in 2022: $", "Number in 2022")
     
     lollipop <- ggplot(d) +
       geom_segment(
@@ -351,8 +351,8 @@ function(input, output, session) {
           y = 0,
           yend = change_pct,
         ),
-        color = 'grey',
-        linewidth = 2.5
+        color = 'grey45',
+        linewidth = 1.5
       ) +
       geom_segment(
         aes(
@@ -366,26 +366,37 @@ function(input, output, session) {
           length = unit(0.8, "cm"),
           type = 'closed'
         ),
-        linewidth = 2.5
+        linewidth = 1.8
       ) +
+      geom_hline(yintercept = 0, color = 'grey60', linewidth = 0.8) +
       scale_color_gradient2(
-        low = "darkred", mid = "#FFFF33", high = "darkgreen", midpoint = 0)  +
+        low = "#AF2213FF", mid = "#F0F6EBFF", high = "#244E57FF", midpoint = 0) +
+      # scale_color_gradientn(
+      #   colors = as.vector(paletteer_d("MexBrewer::Revolucion"))#,
+      #   #values = d$change_pct
+      # ) +
       coord_flip() +
       xlab("") +
-      ylab(y_label) +
+      ylab("") +
       scale_y_continuous(
-        labels = label_number(scale_cut = cut_short_scale())
+        labels = label_number(scale_cut = cut_short_scale()),
+        expand = c(0, 0)
       ) +
       theme_ipsum() +
       theme(legend.position = "none",
-            panel.grid.major = element_blank(),
             panel.grid.minor = element_blank(),
+            panel.grid.major = element_line(
+              color = "grey89", size = 0.8),
             panel.border = element_blank(),
-            axis.ticks.x = element_blank())
+            axis.ticks.x = element_blank(),
+            axis.text.x = element_text(
+              size = 16, family = "Arial Narrow", margin = margin(t = 10)),
+            axis.text.y = element_text(
+              size = 16, family = "Arial Narrow", margin = margin(r = 10)),
+            plot.margin = margin(0)
+            )
     
     lollipop
-    #ggplotly(lollipop, tooltip = c("x", 'y', 'color')) %>% config(displayModeBar = FALSE)# +
-    #layout(hovermode = "y unified")
 
   })
   

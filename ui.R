@@ -4,10 +4,11 @@ library(bslib)
 library(reactable)
 library(plotly)
 library(shinyWidgets)
+library(ggiraph)
 
 
 ui <- page_fillable(
-  theme = bslib::bs_theme(bootswatch = "yeti"),
+  theme = bslib::bs_theme(bootswatch = "yeti", font_scale = 0.9),
   
   includeCSS("www/my_style.css"),
   
@@ -106,7 +107,7 @@ ui <- page_fillable(
       card_header(
         uiOutput('plot_header')
         ),
-      plotOutput('lollipop')
+      plotOutput('lollipop', width = "100%")
       ),
     card(
       card_header(
