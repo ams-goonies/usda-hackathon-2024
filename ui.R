@@ -10,7 +10,7 @@ ui <- page_fillable(
   
   includeCSS("www/my_style.css"),
   
-  h2(HTML('<img src="usda-logo-color.svg" height="60" style="padding-right:20px" >AgCensus Data Explorer')),
+  h3(HTML('<img src="usda-logo-color.svg" height="50" style="padding-right:20px" >AgCensus Data Explorer')),
   
   layout_columns(
     
@@ -28,8 +28,16 @@ ui <- page_fillable(
         selected = "ALL STATES",
         width = '100%'
       ),
+      textOutput('stateSelected'),
       
-      #textOutput('stateSelected'),
+      radioGroupButtons(
+        inputId = "categorySelector",
+        label = "Data category:", 
+        choices = c("Sales totals", "Sales proportions", "Demographics"),
+        #status = "info",
+        width = '100%'
+      ),
+      textOutput('catSelected'),
       # selectInput(
       #   inputId = "countySelector",
       #   label = "County:",
@@ -46,8 +54,7 @@ ui <- page_fillable(
         choices = c("PRODUCERS, (ALL), FEMALE - NUMBER OF PRODUCERS"),
         width = '100%'
       ),
-      #textOutput('metricSelected'),
-      
+      textOutput('metricSelected'),
       # selectInput(
       #   inputId = "demographicSelector",
       #   label = "Demographic metric:",
@@ -61,15 +68,24 @@ ui <- page_fillable(
       #   width = '100%'
       # ),
       
-      awesomeRadio(
+      materialSwitch(
         inputId = "sizeSelector",
-        label = "Filter by farm size:", 
-        choices = c("All farms" = 'All',
-                    "Small farms only (sales <= $250k/yr.)" = 'Small'
-                    ),
-        selected = "All",
-        status = "warning"
-      )#,
+        label = "Show results for small farms only", 
+        status = "primary",
+        right = TRUE,
+        value = FALSE
+      ),
+      textOutput('sizeSelected')
+      
+      # awesomeRadio(
+      #   inputId = "sizeSelector",
+      #   label = "Filter by farm size:", 
+      #   choices = c("All farms" = 'All',
+      #               "Small farms only (sales <= $250k/yr.)" = 'Small'
+      #               ),
+      #   selected = "All",
+      #   status = "warning"
+      # )#,
       
       # actionButton(
       #   inputId = "updateButton",
