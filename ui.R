@@ -8,7 +8,7 @@ library(ggiraph)
 
 
 ui <- page_fillable(
-  theme = bslib::bs_theme(bootswatch = "yeti", font_scale = 0.9),
+  theme = bslib::bs_theme(bootswatch = "yeti", font_scale = 0.75),
   
   includeCSS("www/my_style.css"),
   
@@ -30,7 +30,7 @@ ui <- page_fillable(
         selected = "ALL STATES",
         width = '100%'
       ),
-      textOutput('stateSelected'),
+      #textOutput('stateSelected'),
       
       radioGroupButtons(
         inputId = "categorySelector",
@@ -42,7 +42,7 @@ ui <- page_fillable(
         #status = "info",
         width = '100%'
       ),
-      textOutput('catSelected'),
+      #textOutput('catSelected'),
 
       selectInput(
         inputId = "metricSelector",
@@ -50,19 +50,7 @@ ui <- page_fillable(
         choices = c("COMMODITY TOTALS - SALES, MEASURED IN $"),
         width = '100%'
       ),
-      textOutput('metricSelected'),
-      # selectInput(
-      #   inputId = "demographicSelector",
-      #   label = "Demographic metric:",
-      #   choices = c("(select a state above to view demographics)")
-      # ),
-      # selectInput(
-      #   inputId = "sizeSelector",
-      #   label = "Farm size:",
-      #   choices = c("Small", "Not small", "All"),
-      #   selected = 'All',
-      #   width = '100%'
-      # ),
+      #textOutput('metricSelected'),
       
       materialSwitch(
         inputId = "sizeSelector",
@@ -72,22 +60,6 @@ ui <- page_fillable(
         value = FALSE
       ),
       textOutput('sizeSelected')
-      
-      # awesomeRadio(
-      #   inputId = "sizeSelector",
-      #   label = "Filter by farm size:", 
-      #   choices = c("All farms" = 'All',
-      #               "Small farms only (sales <= $250k/yr.)" = 'Small'
-      #               ),
-      #   selected = "All",
-      #   status = "warning"
-      # )#,
-      
-      # actionButton(
-      #   inputId = "updateButton",
-      #   label = "GET THE DATA"
-      # )
-      #textOutput('sizeSelected')
     ),
     card(
       #height = 450,
@@ -104,6 +76,7 @@ ui <- page_fillable(
   ),
   layout_columns(
     card(
+      class = 'plot-card',
       card_header(
         uiOutput('plot_header')
         ),
