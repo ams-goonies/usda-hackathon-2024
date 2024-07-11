@@ -7,6 +7,7 @@ library(shinyWidgets)
 
 
 ui <- page_fillable(
+  theme = bslib::bs_theme(bootswatch = "yeti"),
   
   includeCSS("www/my_style.css"),
   
@@ -33,25 +34,19 @@ ui <- page_fillable(
       radioGroupButtons(
         inputId = "categorySelector",
         label = "Data category:", 
-        choices = c("Sales totals", "Sales proportions", "Demographics"),
+        choices = c(
+          "Sales totals" = "Total sales, $", 
+          "Sales proportions" = "percent of total", 
+          "Demographics" = "Number of producers"),
         #status = "info",
         width = '100%'
       ),
       textOutput('catSelected'),
-      # selectInput(
-      #   inputId = "countySelector",
-      #   label = "County:",
-      #   choices = c("(select a state above to view counties)")
-      # ),
-      # selectInput(
-      #   inputId = "commoditySelector",
-      #   label = "Commodity:",
-      #   choices = c("(select a state above to view commodities)")
-      # ),
+
       selectInput(
         inputId = "metricSelector",
         label = "Metric to view:",
-        choices = c("PRODUCERS, (ALL), FEMALE - NUMBER OF PRODUCERS"),
+        choices = c("placeholder"),
         width = '100%'
       ),
       textOutput('metricSelected'),

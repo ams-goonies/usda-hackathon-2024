@@ -7,14 +7,14 @@ library(sf)
 
 sf_use_s2(FALSE)
 
-get_metrics_list <- function(state = NULL, county = NULL, size = 'All') {
+get_metrics_list <- function(state = NULL, size = 'All', type = "Total sales, $") {
   
   m <- readRDS('data/finalized/ALL_DATA.rds') %>%
     filter(
       case_when(state == 'ALL STATES' ~ county_name == 'All', T ~ !is.na(state_name)),
       case_when(!is.null(state) & state != 'ALL STATES' ~ state_name == state, T ~ !is.na(state_name)),
-      #case_when(!is.null(county) ~ county_name == county, T ~ !is.na(state_name))#,
-      case_when(!is.null(size) ~ farm_size == size, T ~ !is.na(state_name))
+      case_when(!is.null(size) ~ farm_size == size, T ~ !is.na(state_name)),
+      metric == type
     ) %>%
     select(short_desc) %>%
     distinct() %>%
@@ -78,24 +78,6 @@ get_census_data <- function(state = NULL, county = NULL, desc = NULL, size = NUL
   
   return(joined)
   
-}
-
-popup_creator <- function(d, state){
-  return(
-    ifelse(
-      state == "ALL STATES",
-      glue(
-        "<b>{d$state_name}</b><br/>",
-        "2017 value: {format(d$Value_2017, big.mark = ",", scientific = FALSE)}<br/>",
-        "2022 value: {prettyNum(d$Value_2022, big.mark = ",", scientific = FALSE)}<br/>",
-        "Change: {d$change_pct}%"),
-      glue(
-        "<b>{d$county_name}, {d$state_name}</b><br/>",
-        "2017 value: {format(d$Value_2017, big.mark = ",", scientific = FALSE)}<br/>",
-        "2022 value: {prettyNum(d$Value_2022, big.mark = ",", scientific = FALSE)}<br/>",
-        "Change: {d$change_pct}%")
-    )
-  )
 }
 
 
