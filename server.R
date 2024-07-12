@@ -63,7 +63,7 @@ function(input, output, session) {
         state = input$stateSelector,
         county = NULL,
         desc = input$metricSelector,
-        size = input$sizeSelector
+        size = size()
       ) %>%
       filter(!is.infinite(Value_2017),
              !Value_2017 %in% c("Inf", "-Inf"), 
