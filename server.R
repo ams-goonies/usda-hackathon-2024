@@ -17,15 +17,25 @@ function(input, output, session) {
   metrics_available <- reactiveVal(
     get_metrics_list(
       state = "ALL STATES",
-      size = "All"
+      size = "All",
+      type = "Total sales, $"
     )
   )
   
+  size <- reactive({
+    ifelse(isTruthy(input$sizeSelector) & input$sizeSelector == TRUE, 
+           'Small', 'All')
+  })
+  
   observe({
+    print(input$stateSelector)
+    print(size())
+    print(input$categorySelector)
+    
     metrics_available(
       get_metrics_list(
         state = ifelse(isTruthy(input$stateSelector), input$stateSelector, "ALL STATES"),
-        size = ifelse(isTruthy(input$sizeSelector), input$sizeSelector, "All"),
+        size = size(),
         type = ifelse(isTruthy(input$categorySelector), input$categorySelector, "Total sales, $")
         )
       )
