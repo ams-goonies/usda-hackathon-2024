@@ -997,9 +997,14 @@
     },
     "htmlwidgets": {
       "Package": "htmlwidgets",
-      "Version": "1.6.4",
-      "Source": "Repository",
-      "Repository": "CRAN",
+      "Version": "1.6.4.9000",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "htmlwidgets",
+      "RemoteUsername": "ramnathv",
+      "RemoteRef": "HEAD",
+      "RemoteSha": "373eedef8298c53c13f40bc442230d947884af59",
       "Requirements": [
         "grDevices",
         "htmltools",
@@ -1008,7 +1013,7 @@
         "rmarkdown",
         "yaml"
       ],
-      "Hash": "04291cc45198225444a397606810ac37"
+      "Hash": "3e63a6dad66b80b7c878f1498e26ee30"
     },
     "httpcode": {
       "Package": "httpcode",
@@ -1559,12 +1564,17 @@
     "reactR": {
       "Package": "reactR",
       "Version": "0.6.0",
-      "Source": "Repository",
-      "Repository": "CRAN",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteRepo": "reactR",
+      "RemoteUsername": "react-R",
+      "RemoteRef": "develop",
+      "RemoteSha": "a037a58f29bd037215286b7e313e2d4bc0267661",
       "Requirements": [
         "htmltools"
       ],
-      "Hash": "10f4d661c235181648a5958c02c0382a"
+      "Hash": "9ba22a3aab13fa7d32ea9fc29253ae8b"
     },
     "reactable": {
       "Package": "reactable",
