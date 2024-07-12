@@ -13,13 +13,7 @@ library(plotly)
 library(fontawesome)
 
 function(input, output, session) {
-  
-  # debugging help
-  outputf$stateSelected <- renderText(input$stateSelector)
-  output$catSelected <- renderText(input$categorySelector)
-  output$metricSelected <- renderText(input$metricSelector)
-  output$sizeSelected <- renderText(input$sizeSelector)
-  
+
   metrics_available <- reactiveVal(
     get_metrics_list(
       state = "ALL STATES",
@@ -69,23 +63,22 @@ function(input, output, session) {
   })
   
   
-  d <- reactiveVal(readRDS('data/finalized/d_init.rds'))
+  d <- reactiveVal(
+    #readRDS('data/finalized/d_init.rds')
+    )
   
   observe({
     state <- ifelse(isTruthy(input$stateSelector) == FALSE, 'ALL STATES', 
                     input$stateSelector)
-    #print(paste("state:", state))
+
     metric <- ifelse(isTruthy(input$metricSelector) == FALSE, 
                      "PRODUCERS, (ALL), FEMALE - NUMBER OF PRODUCERS", 
                      input$metricSelector)
-    #print(paste("metric:", metric))
-    
+
     size <- ifelse(isTruthy(input$sizeSelector) == FALSE, 'All', 
                    input$sizeSelector)
     
     size <- ifelse(input$sizeSelector != TRUE, "All", "Small")
-    #print(size)
-    #print(paste("size:", size))
     
     d(
       get_census_data(
@@ -125,109 +118,26 @@ function(input, output, session) {
   
   
   output$mapview <- renderLeaflet({
-
-    d <- d() %>%
-      mutate(
-        change_html = ifelse(
-          change > 0,
-          paste0("fa-arrow-up", as.character(change_pct)),
-          paste0("fa-arrow-down", as.character(change_pct))
-        )
-      )
-    
-    pal17_init <- colorNumeric("YlGnBu", domain = d$Value_2017)
-    pal22_init <- colorNumeric("YlGnBu", domain = d$Value_2022)
-    delta_colors <- as.vector(paletteer_d("MexBrewer::Revolucion"))
-    pal_delta_init <- colorNumeric(palette = delta_colors, 
-                                   domain = d$change_pct)
-    pal_delta_init_rev <- colorNumeric(
-      palette = delta_colors,
-      domain = d$change_pct,
-      reverse = TRUE
-    )
+    d <- d() #%>%
+      # mutate(
+      #   change_html = ifelse(
+      #     change > 0,
+      #     paste0("fa-arrow-up", as.character(change_pct)),
+      #     paste0("fa-arrow-down", as.character(change_pct))
+      #   ),
+      #   Value_2017_str = ifelse(
+      #     
+      #     label_number(scale_cut = cut_short_scale(), accuracy = 0.1)(Value_2017)
+      # )
     
     leaflet() %>%
       addProviderTiles(providers$CartoDB.Positron) %>%
-      setView(-95.7129, 37.0902, zoom = 4) %>%
-      # addPolygons(
-      #   data = d,
-      #   fillColor = ~pal17_init(Value_2017),
-      #   fillOpacity = 0.7,
-      #   color = 'white',
-      #   opacity = 1,
-      #   weight = 1,
-      #   group = '2017 Data',
-      #   popup = glue(
-      #     ifelse(
-      #       input$stateSelector!="ALL STATES",
-      #       "<b>{d()$county_name} COUNTY, {d()$state_name}</b><br/>",
-      #       "<b>{d()$state_name}</b><br/>"
-      #     ),
-      #     "2017 value: {format(d()$Value_2017, big.mark = ",", scientific = FALSE)}<br/>",
-      #     "2022 value: {prettyNum(d()$Value_2022, big.mark = ",", scientific = FALSE)}<br/>",
-      #     "Change: {d()$change_pct}%") %>%
-      #     lapply(htmltools::HTML)   
-      #   ) %>%
-      # addPolygons(
-      #   data = d,
-      #   fillColor = ~pal22_init(Value_2022),
-      #   fillOpacity = 0.7,
-      #   color = 'white',
-      #   opacity = 1,
-      #   weight = 1,
-      #   group = '2022 Data',
-      #   popup = glue(
-      #     ifelse(
-      #       input$stateSelector!="ALL STATES",
-      #       "<b>{d()$county_name} COUNTY, {d()$state_name}</b><br/>",
-      #       "<b>{d()$state_name}</b><br/>"
-      #     ),
-      #     "2017 value: {format(d()$Value_2017, big.mark = ",", scientific = FALSE)}<br/>",
-      #     "2022 value: {prettyNum(d()$Value_2022, big.mark = ",", scientific = FALSE)}<br/>",
-      #     "Change: {d()$change_pct}%") %>%
-      #     lapply(htmltools::HTML)      
-      #   ) %>%
-      addPolygons(
-        data = d,
-        fillColor = ~pal_delta_init(change_pct),
-        fillOpacity = 0.7,
-        color = 'white',
-        opacity = 1,
-        weight = 1,
-        group = 'Change, 2017-2022',
-        popup = glue(
-          ifelse(
-            input$stateSelector!="ALL STATES",
-            "<b>{d()$county_name} COUNTY, {d()$state_name}</b><br/>",
-            "<b>{d()$state_name}</b><br/>"
-          ),
-          "2017 value: {format(d()$Value_2017, big.mark = ",", scientific = FALSE)}<br/>",
-          "2022 value: {prettyNum(d()$Value_2022, big.mark = ",", scientific = FALSE)}<br/>",
-          "Change: {d()$change_html}%") %>%
-          lapply(htmltools::HTML)      
-        ) %>%
-      addLegend("bottomright", 
-                pal = pal_delta_init_rev,
-                values = d$change_pct,
-                title = "Change, 2017-2022",
-                labFormat = labelFormat(
-                  suffix = "%",
-                  transform = function(x) sort(x, decreasing = TRUE)
-                  ),
-                opacity = 1,
-                group = "Change, 2017-2022"
-                ) %>%
-      addLayersControl(
-        baseGroups = c("Change, 2017-2022", "2017 Data", "2022 Data"),
-        options = layersControlOptions(collapsed = FALSE)
-      )
+      setView(-95.7129, 37.0902, zoom = 4) 
   })
 
   observeEvent(d(), {
     map_pal_17 <- pal17()
     map_pal_22 <- pal22()
-    map_pal_delta <- pal_delta()
-    pal_delta_init_rev <- pal_delta_rev()
     
     d <- d() %>%
       mutate(
@@ -235,19 +145,38 @@ function(input, output, session) {
           change > 0,
           paste(tags$span(fa("arrow-up", fill = "#244E57FF")), as.character(change_pct)),
           paste(tags$span(fa("arrow-down", fill = "#AF2213FF")), as.character(change_pct))
-        )
+        ),
+        Value_2017_str = ifelse(
+          input$categorySelector == "Total sales, $", 
+          paste0("$", label_number(scale_cut = cut_short_scale(), accuracy = 0.1)(Value_2017)),
+          as.character(Value_2017)
+          ),
+        Value_2022_str = ifelse(
+          input$categorySelector == "Total sales, $", 
+          paste0("$",label_number(scale_cut = cut_short_scale(), accuracy = 0.1)(Value_2022)),
+          as.character(Value_2022)
+        ) 
       )
+    
+    # custom palette
+    minVal <- min(d$change_pct, na.rm = TRUE)
+    maxVal <- max(d$change_pct, na.rm = TRUE)
+    max <- max(abs(minVal), abs(maxVal))
+    domain <- c(-1*max, max)
+    colorPal <- c(colorRampPalette(colors = c("#AF2213FF", "#FFDACB"), space = "Lab")(max),
+                  colorRampPalette(colors = c("#ECFADC", "#244E57FF"), space = "Lab")(max))
+    
     
     m <- leafletProxy('mapview') %>%
       clearGroup("Change, 2017-2022") %>%
       clearControls() %>%
       addPolygons(
         data = d,
-        fillColor = ~map_pal_17(Value_2017),
+        fillColor = ~map_pal_17(Value_2017) ,
         fillOpacity = 0.7,
         color = 'white',
         opacity = 1,
-        weight = 3,
+        weight = 1,
         group = '2017 Data',
         popup = glue(
           ifelse(
@@ -255,8 +184,8 @@ function(input, output, session) {
             "<b>{d$county_name} COUNTY, {d$state_name}</b><br/>",
             "<b>{d$state_name}</b><br/>"
           ),
-          "2017 value: {format(d$Value_2017, big.mark = ",", scientific = FALSE)}<br/>",
-          "2022 value: {prettyNum(d$Value_2022, big.mark = ",", scientific = FALSE)}<br/>",
+          "2017 value: {d$Value_2017_str}<br/>",
+          "2022 value: {d$Value_2022_str}<br/>",
           'Change: {d$change_html}%') %>%
           lapply(htmltools::HTML)
         ) %>%
@@ -266,7 +195,7 @@ function(input, output, session) {
         fillOpacity = 0.7,
         color = 'white',
         opacity = 1,
-        weight = 3,
+        weight = 1,
         group = '2022 Data',
         popup = glue(
           ifelse(
@@ -274,14 +203,14 @@ function(input, output, session) {
             "<b>{d$county_name} COUNTY, {d$state_name}</b><br/>",
             "<b>{d$state_name}</b><br/>"
           ),
-          "2017 value: {format(d$Value_2017, big.mark = ",", scientific = FALSE)}<br/>",
-          "2022 value: {prettyNum(d$Value_2022, big.mark = ",", scientific = FALSE)}<br/>",
+          "2017 value: {d$Value_2017_str}<br/>",
+          "2022 value: {d$Value_2022_str}<br/>",
           "Change: {d$change_html}%") %>%
           lapply(htmltools::HTML)
         ) %>%
       addPolygons(
         data = d,
-        fillColor = ~map_pal_delta(change_pct),
+        fillColor = ~get('colorBin')(colorPal, domain)(change_pct),
         fillOpacity = 0.7,
         color = 'white',
         opacity = 1,
@@ -293,13 +222,14 @@ function(input, output, session) {
             "<b>{d$county_name} COUNTY, {d$state_name}</b><br/>",
             "<b>{d$state_name}</b><br/>"
             ),
-          "2017 value: {format(d$Value_2017, big.mark = ",", scientific = FALSE)}<br/>",
-          "2022 value: {prettyNum(d$Value_2022, big.mark = ",", scientific = FALSE)}<br/>",
+          "2017 value: {d$Value_2017_str}<br/>",
+          "2022 value: {d$Value_2022_str}<br/>",
           "Change: {d$change_html}%") %>%
           lapply(htmltools::HTML)
       ) %>%
-      addLegend("bottomright", pal = pal_delta_init_rev, 
-                values = d()$change_pct,
+      addLegend("bottomright", 
+                pal = colorBin(colorPal, domain = domain, rev = TRUE), 
+                values = d$change_pct,
                 title = "Change, 2017-2022",
                 labFormat = labelFormat(
                   suffix = "%",
@@ -368,7 +298,7 @@ function(input, output, session) {
           yend = change_pct,
         ),
         color = 'grey45',
-        linewidth = 1.5
+        linewidth = 1
       ) +
       geom_segment(
         aes(
