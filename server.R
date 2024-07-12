@@ -373,17 +373,17 @@ function(input, output, session) {
         rename(County = county_name)
     }
     
-    orange_pal <- function(x) {
+    my_pal <- function(x) {
       if (!is.na(x)) {
         rgb(
           colorRamp(
-            c("#D9792EFF", "#F0F6EBFF", "#368990FF"))(x), 
+            c("#AF2213FF", "#F0F6EBFF", "#244E57FF"))(x), 
           maxColorValue = 255)
       } else {
         'grey'
       }
     }
-    
+
     reactable(
       d, 
       columns = list(
@@ -391,28 +391,39 @@ function(input, output, session) {
         metric = colDef(show = FALSE),
         farm_size = colDef(name = "Farm Size"),
         Value_2017 = colDef(
-          name = "2017 Sales",
-          format = colFormat(prefix = "$", separators = TRUE, digits = 0)
+          name = "2017 Value",
+          format = colFormat(
+            prefix = ifelse(input$categorySelector == "Total sales, $", "$", ""),
+            suffix = ifelse(input$categorySelector == "percent of total", "%", ""),
+            separators = TRUE, 
+            digits = 0)
         ),
         Value_2022 = colDef(
-          name = "2022 Sales",
-          format = colFormat(prefix = "$", separators = TRUE, digits = 0)
+          name = "2022 Value",
+          format = colFormat(
+            prefix = ifelse(input$categorySelector == "Total sales, $", "$", ""),
+            suffix = ifelse(input$categorySelector == "percent of total", "%", ""),
+            separators = TRUE, 
+            digits = 0)
         ),
         change = colDef(
           name = "Change",
-          format = colFormat(prefix = "$", separators = TRUE, digits = 0),
+          format = colFormat(
+            prefix = ifelse(input$categorySelector == "Total sales, $", "$", ""),
+            suffix = ifelse(input$categorySelector == "percent of total", "pp", ""),            separators = TRUE, 
+            digits = 0),
           style = function(value) {
             if(is.na(value)){
               color <- 'grey85'
             } else {
               normalized <- (value - min(d$change, na.rm = TRUE)) / (max(d$change, na.rm = TRUE) - min(d$change, na.rm = TRUE))
-              color <- orange_pal(normalized)
+              color <- my_pal(normalized)
             }
             list(background = color)
           }
         ),
         change_pct = colDef(
-          name = "Change in Sales",
+          name = "Change %",
           cell = function(value) {
             if (is.na(value)) return(NA)
             sprintf("%.2f%%", value)
@@ -422,7 +433,7 @@ function(input, output, session) {
               color <- 'grey85'
             } else {
               normalized <- (value - min(d$change_pct, na.rm = TRUE)) / (max(d$change_pct, na.rm = TRUE) - min(d$change_pct, na.rm = TRUE))
-              color <- orange_pal(normalized)
+              color <- my_pal(normalized)
             }
             list(background = color)
           },
@@ -431,4 +442,5 @@ function(input, output, session) {
       )
     )  
   })
+  
 }
