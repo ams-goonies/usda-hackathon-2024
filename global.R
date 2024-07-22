@@ -15,7 +15,7 @@ sf_use_s2(FALSE)
 
 get_metrics_list <- function(state = NULL, size = 'All', type = "Total sales, $") {
   
-  m <- readRDS('data/finalized/ALL_DATA.rds') %>%
+  m <- readRDS('data/finalized/ALL_DATA2.rds') %>%
     filter(
       case_when(state == 'ALL STATES' ~ county_name == 'All', T ~ !is.na(state_name)),
       case_when(!is.null(state) & state != 'ALL STATES' ~ state_name == state, T ~ !is.na(state_name)),
@@ -34,7 +34,7 @@ get_metrics_list <- function(state = NULL, size = 'All', type = "Total sales, $"
 
 get_state_list <- function() {
   
-  readRDS('data/finalized/ALL_DATA.rds') %>%
+  readRDS('data/finalized/ALL_DATA2.rds') %>%
     select(state_name) %>%
     distinct() %>%
     pull(state_name)
@@ -52,7 +52,7 @@ get_census_data <- function(state = NULL, county = NULL, desc = NULL, size = NUL
   }
   
   joined <- geoms_table %>%
-    merge(readRDS('data/finalized/ALL_DATA.rds'), 
+    merge(readRDS('data/finalized/ALL_DATA2.rds'), 
           by = c('state_name', 'county_name'))
   
   if (state == "ALL STATES") {
