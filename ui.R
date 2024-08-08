@@ -5,14 +5,15 @@ library(reactable)
 library(plotly)
 library(shinyWidgets)
 library(ggiraph)
+library(mapgl)
 
 
 ui <- page_fillable(
-  theme = bslib::bs_theme(bootswatch = "yeti", font_scale = 0.75),
+  theme = bslib::bs_theme(bootswatch = "minty", font_scale = 0.7),
   
   includeCSS("www/my_style.css"),
   
-  h3(HTML('<img src="usda-logo-color.svg" height="50" style="padding-right:20px" >AgCensus Data Explorer')),
+  h3(HTML('<img src="usda-logo-color.svg" height="50" style="padding-right:20px" >AgCensus State Commodity Sales Data Explorer')),
   
   layout_columns(
     
@@ -26,8 +27,8 @@ ui <- page_fillable(
       selectInput(
         inputId = "stateSelector",
         label = "State:",
-        choices = c("ALL STATES", ALL_STATES),
-        selected = "ALL STATES",
+        choices = c(ALL_STATES),
+        selected = 'ALABAMA',
         width = '100%'
       ),
       #textOutput('stateSelected'),
@@ -68,7 +69,8 @@ ui <- page_fillable(
         uiOutput('map_header')
         ),
       card_body(
-        leafletOutput('mapview')
+        #leafletOutput('mapview')
+        maplibreOutput('mapview')
       )
     ),
     col_widths = c(5, 7),
@@ -87,7 +89,8 @@ ui <- page_fillable(
         uiOutput('table_header')
         
         ),
-      reactableOutput('table')
+      #reactableOutput('table')
+      dataTableOutput('table')
       ),
     col_widths = c(5, 7),
     height = '50%'

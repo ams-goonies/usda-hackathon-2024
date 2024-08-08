@@ -11,6 +11,9 @@ library(htmltools)
 library(ggiraph)
 library(plotly)
 library(fontawesome)
+library(bslib)
+library(mapgl)
+library(DT)
 
 function(input, output, session) {
 
@@ -74,14 +77,14 @@ function(input, output, session) {
       )
   })
   
-  pal_17 <- reactive({
-    colorNumeric("BuPu", domain = d()$Value_2017)
-  })
-  
-  pal_22 <- reactive({
-    colorNumeric("BuPu", domain = d()$Value_2022)
-  })
-  
+  # pal_17 <- reactive({
+  #   colorNumeric("BuPu", domain = d()$Value_2017)
+  # })
+  # 
+  # pal_22 <- reactive({
+  #   colorNumeric("BuPu", domain = d()$Value_2022)
+  # })
+  # 
   # pal_delta <- reactive({
   #   delta_colors <- as.vector(paletteer_d("MexBrewer::Revolucion"))
   #   colorNumeric(palette = delta_colors, domain = d()$change_pct)
@@ -92,132 +95,9 @@ function(input, output, session) {
   #   colorNumeric(palette = delta_colors, domain = d()$change_pct,
   #                reverse = TRUE)
   # })
-  
-  
-  output$mapview <- renderLeaflet({
-    d <- d() %>%
-      mutate(
-        change_html = ifelse(
-          change > 0,
-          paste(tags$span(fa("arrow-up", fill = "#244E57FF")), as.character(change_pct)),
-          paste(tags$span(fa("arrow-down", fill = "#AF2213FF")), as.character(change_pct))
-        ),
-        Value_2017_str = ifelse(
-          input$categorySelector == "Total sales, $",
-          paste0("$", label_number(scale_cut = cut_short_scale(), accuracy = 0.1)(Value_2017)),
-          as.character(Value_2017)
-          ),
-        Value_2022_str = ifelse(
-          input$categorySelector == "Total sales, $",
-          paste0("$",label_number(scale_cut = cut_short_scale(), accuracy = 0.1)(Value_2022)),
-          as.character(Value_2022)
-        )
-      )
-    
-    # custom palette
-    minVal <- min(d$change_pct, na.rm = TRUE)
-    maxVal <- max(d$change_pct, na.rm = TRUE)
-    max <- max(abs(minVal), abs(maxVal))
-    domain <- c(-1*max, max)
-    colorPal <- c(colorRampPalette(colors = c("#AF2213FF", "#FFDACB"), space = "Lab")(max),
-                  colorRampPalette(colors = c("#ECFADC", "#244E57FF"), space = "Lab")(max))
-    
-    m <- leaflet() %>%
-      addProviderTiles(providers$CartoDB.Positron) %>%
-      setView(-95.7129, 37.0902, zoom = 4) %>%
-      addPolygons(
-        data = d,
-        fillColor = ~pal_17()(Value_2017) ,
-        fillOpacity = 0.7,
-        color = 'white',
-        opacity = 1,
-        weight = 1,
-        group = '2017 Data',
-        popup = glue(
-          ifelse(
-            input$stateSelector!="ALL STATES",
-            "<b>{d$county_name} COUNTY, {d$state_name}</b><br/>",
-            "<b>{d$state_name}</b><br/>"
-          ),
-          "2017 value: {d$Value_2017_str}<br/>",
-          "2022 value: {d$Value_2022_str}<br/>",
-          'Change: {d$change_html}%') %>%
-          lapply(htmltools::HTML)
-        ) %>%
-      addPolygons(
-        data = d,
-        fillColor = ~pal_22()(Value_2022),
-        fillOpacity = 0.7,
-        color = 'white',
-        opacity = 1,
-        weight = 1,
-        group = '2022 Data',
-        popup = glue(
-          ifelse(
-            input$stateSelector!="ALL STATES",
-            "<b>{d$county_name} COUNTY, {d$state_name}</b><br/>",
-            "<b>{d$state_name}</b><br/>"
-          ),
-          "2017 value: {d$Value_2017_str}<br/>",
-          "2022 value: {d$Value_2022_str}<br/>",
-          "Change: {d$change_html}%") %>%
-          lapply(htmltools::HTML)
-        ) %>%
-      addPolygons(
-        data = d,
-        fillColor = ~get('colorBin')(colorPal, domain)(change_pct),
-        fillOpacity = 0.7,
-        color = 'white',
-        opacity = 1,
-        weight = 1,
-        group = 'Change, 2017-2022',
-        popup = glue(
-          ifelse(
-            input$stateSelector!="ALL STATES",
-            "<b>{d$county_name} COUNTY, {d$state_name}</b><br/>",
-            "<b>{d$state_name}</b><br/>"
-            ),
-          "2017 value: {d$Value_2017_str}<br/>",
-          "2022 value: {d$Value_2022_str}<br/>",
-          "Change: {d$change_html}%") %>%
-          lapply(htmltools::HTML)
-      ) %>%
-      addLegend("bottomright",
-                pal = colorBin(colorPal, domain = domain, rev = TRUE),
-                values = d$change_pct,
-                title = "Change, 2017-2022",
-                labFormat = labelFormat(
-                  suffix = "%",
-                  transform = function(x) sort(x, decreasing = TRUE)
-                ),
-                opacity = 1,
-                group = "Change, 2017-2022"
-      ) %>%
-      addLayersControl(
-        position = 'bottomleft',
-        baseGroups = c("Change, 2017-2022", "2017 Data", "2022 Data"),
-        options = layersControlOptions(collapsed = FALSE)
-      )
-
-    if (input$stateSelector == "ALL STATES"){
-      m %>% setView(-95.7129, 37.0902, zoom = 4)
-
-    } else {
-      bb <- as.numeric(st_bbox(d))
-      m %>%
-        fitBounds(
-          lng1 = bb[1],
-          lat1 = bb[2],
-          lng2 = bb[3],
-          lat2 = bb[4]
-        )
-    }
-  })
-
-  # observeEvent(d(), {
-  #   map_pal_17 <- pal17()
-  #   map_pal_22 <- pal22()
-  #   
+  # 
+  # 
+  # output$mapview <- renderLeaflet({
   #   d <- d() %>%
   #     mutate(
   #       change_html = ifelse(
@@ -226,17 +106,17 @@ function(input, output, session) {
   #         paste(tags$span(fa("arrow-down", fill = "#AF2213FF")), as.character(change_pct))
   #       ),
   #       Value_2017_str = ifelse(
-  #         input$categorySelector == "Total sales, $", 
+  #         input$categorySelector == "Total sales, $",
   #         paste0("$", label_number(scale_cut = cut_short_scale(), accuracy = 0.1)(Value_2017)),
   #         as.character(Value_2017)
   #         ),
   #       Value_2022_str = ifelse(
-  #         input$categorySelector == "Total sales, $", 
+  #         input$categorySelector == "Total sales, $",
   #         paste0("$",label_number(scale_cut = cut_short_scale(), accuracy = 0.1)(Value_2022)),
   #         as.character(Value_2022)
-  #       ) 
+  #       )
   #     )
-  #   
+  # 
   #   # custom palette
   #   minVal <- min(d$change_pct, na.rm = TRUE)
   #   maxVal <- max(d$change_pct, na.rm = TRUE)
@@ -244,8 +124,133 @@ function(input, output, session) {
   #   domain <- c(-1*max, max)
   #   colorPal <- c(colorRampPalette(colors = c("#AF2213FF", "#FFDACB"), space = "Lab")(max),
   #                 colorRampPalette(colors = c("#ECFADC", "#244E57FF"), space = "Lab")(max))
-  #   
-  #   
+  # 
+  #   m <- leaflet() %>%
+  #     addProviderTiles(providers$CartoDB.Positron) %>%
+  #     setView(-95.7129, 37.0902, zoom = 4) %>%
+  #     addPolygons(
+  #       data = d,
+  #       fillColor = ~pal_17()(Value_2017) ,
+  #       fillOpacity = 0.7,
+  #       color = 'white',
+  #       opacity = 1,
+  #       weight = 1,
+  #       group = '2017 Data',
+  #       popup = glue(
+  #         ifelse(
+  #           input$stateSelector!="ALL STATES",
+  #           "<b>{d$county_name} COUNTY, {d$state_name}</b><br/>",
+  #           "<b>{d$state_name}</b><br/>"
+  #         ),
+  #         "2017 value: {d$Value_2017_str}<br/>",
+  #         "2022 value: {d$Value_2022_str}<br/>",
+  #         'Change: {d$change_html}%') %>%
+  #         lapply(htmltools::HTML)
+  #       ) %>%
+  #     addPolygons(
+  #       data = d,
+  #       fillColor = ~pal_22()(Value_2022),
+  #       fillOpacity = 0.7,
+  #       color = 'white',
+  #       opacity = 1,
+  #       weight = 1,
+  #       group = '2022 Data',
+  #       popup = glue(
+  #         ifelse(
+  #           input$stateSelector!="ALL STATES",
+  #           "<b>{d$county_name} COUNTY, {d$state_name}</b><br/>",
+  #           "<b>{d$state_name}</b><br/>"
+  #         ),
+  #         "2017 value: {d$Value_2017_str}<br/>",
+  #         "2022 value: {d$Value_2022_str}<br/>",
+  #         "Change: {d$change_html}%") %>%
+  #         lapply(htmltools::HTML)
+  #       ) %>%
+  #     addPolygons(
+  #       data = d,
+  #       fillColor = ~get('colorBin')(colorPal, domain)(change_pct),
+  #       fillOpacity = 0.7,
+  #       color = 'white',
+  #       opacity = 1,
+  #       weight = 1,
+  #       group = 'Change, 2017-2022',
+  #       popup = glue(
+  #         ifelse(
+  #           input$stateSelector!="ALL STATES",
+  #           "<b>{d$county_name} COUNTY, {d$state_name}</b><br/>",
+  #           "<b>{d$state_name}</b><br/>"
+  #           ),
+  #         "2017 value: {d$Value_2017_str}<br/>",
+  #         "2022 value: {d$Value_2022_str}<br/>",
+  #         "Change: {d$change_html}%") %>%
+  #         lapply(htmltools::HTML)
+  #     ) %>%
+  #     addLegend("bottomright",
+  #               pal = colorBin(colorPal, domain = domain, rev = TRUE),
+  #               values = d$change_pct,
+  #               title = "Change, 2017-2022",
+  #               labFormat = labelFormat(
+  #                 suffix = "%",
+  #                 transform = function(x) sort(x, decreasing = TRUE)
+  #               ),
+  #               opacity = 1,
+  #               group = "Change, 2017-2022"
+  #     ) %>%
+  #     addLayersControl(
+  #       position = 'bottomleft',
+  #       baseGroups = c("Change, 2017-2022", "2017 Data", "2022 Data"),
+  #       options = layersControlOptions(collapsed = FALSE)
+  #     )
+  # 
+  #   if (input$stateSelector == "ALL STATES"){
+  #     m %>% setView(-95.7129, 37.0902, zoom = 4)
+  # 
+  #   } else {
+  #     bb <- as.numeric(st_bbox(d))
+  #     m %>%
+  #       fitBounds(
+  #         lng1 = bb[1],
+  #         lat1 = bb[2],
+  #         lng2 = bb[3],
+  #         lat2 = bb[4]
+  #       )
+  #   }
+  # })
+  # 
+  # 
+  # 
+  # observeEvent(d(), {
+  #   map_pal_17 <- pal_17()
+  #   map_pal_22 <- pal_22()
+  # 
+  #   d <- d() %>%
+  #     mutate(
+  #       change_html = ifelse(
+  #         change > 0,
+  #         paste(tags$span(fa("arrow-up", fill = "#244E57FF")), as.character(change_pct)),
+  #         paste(tags$span(fa("arrow-down", fill = "#AF2213FF")), as.character(change_pct))
+  #       ),
+  #       Value_2017_str = ifelse(
+  #         input$categorySelector == "Total sales, $",
+  #         paste0("$", label_number(scale_cut = cut_short_scale(), accuracy = 0.1)(Value_2017)),
+  #         as.character(Value_2017)
+  #         ),
+  #       Value_2022_str = ifelse(
+  #         input$categorySelector == "Total sales, $",
+  #         paste0("$",label_number(scale_cut = cut_short_scale(), accuracy = 0.1)(Value_2022)),
+  #         as.character(Value_2022)
+  #       )
+  #     )
+  # 
+  #   # custom palette
+  #   minVal <- min(d$change_pct, na.rm = TRUE)
+  #   maxVal <- max(d$change_pct, na.rm = TRUE)
+  #   max <- max(abs(minVal), abs(maxVal))
+  #   domain <- c(-1*max, max)
+  #   colorPal <- c(colorRampPalette(colors = c("#AF2213FF", "#FFDACB"), space = "Lab")(max),
+  #                 colorRampPalette(colors = c("#ECFADC", "#244E57FF"), space = "Lab")(max))
+  # 
+  # 
   #   m <- leafletProxy('mapview') %>%
   #     clearGroup("Change, 2017-2022") %>%
   #     clearControls() %>%
@@ -306,8 +311,8 @@ function(input, output, session) {
   #         "Change: {d$change_html}%") %>%
   #         lapply(htmltools::HTML)
   #     ) %>%
-  #     addLegend("bottomright", 
-  #               pal = colorBin(colorPal, domain = domain, rev = TRUE), 
+  #     addLegend("bottomright",
+  #               pal = colorBin(colorPal, domain = domain, rev = TRUE),
   #               values = d$change_pct,
   #               title = "Change, 2017-2022",
   #               labFormat = labelFormat(
@@ -322,7 +327,7 @@ function(input, output, session) {
   #       baseGroups = c("Change, 2017-2022", "2017 Data", "2022 Data"),
   #       options = layersControlOptions(collapsed = FALSE)
   #     )
-  #   
+  # 
   #   if (input$stateSelector == "ALL STATES"){
   #     m %>% setView(-95.7129, 37.0902, zoom = 4)
   # 
@@ -337,6 +342,38 @@ function(input, output, session) {
   #       )
   #   }
   # })
+  
+  output$mapview <- renderMaplibre({
+    
+    brewer_pal <- RColorBrewer::brewer.pal(5, "RdYlBu")
+    
+    maplibre(style = carto_style("positron")) |> 
+      fit_bounds(d(), animate = FALSE) |> 
+      add_fill_layer(
+        id = "census_data",
+        source = d(),
+        fill_color = interpolate(
+          column = 'change_pct',
+          stops = c(brewer_pal[1], brewer_pal[3], brewer_pal[5]),
+          na_color = "lightgrey",
+          values = c(
+            min(d()$change_pct, na.rm = TRUE),
+            median(d()$change_pct,na.rm = TRUE),
+            max(d()$change_pct, na.rm = TRUE)
+          )
+        ),
+        fill_opacity = 0.7
+        ) |>
+      add_legend(
+        HTML("Change in Sales,<br>2017 to 2022"),
+        values = c(
+          min(d()$change_pct, na.rm = TRUE),
+          median(d()$change_pct,na.rm = TRUE),
+          max(d()$change_pct, na.rm = TRUE)
+        ),
+        colors = c(brewer_pal[1], brewer_pal[3], brewer_pal[5])
+        )
+  })
   
   
   output$lollipop <- renderPlot({
@@ -426,78 +463,82 @@ function(input, output, session) {
 
   })
   
-  
-  output$table <- renderReactable({
-    
-    d <- d() %>%
-      st_drop_geometry() %>%
-      arrange(desc(Value_2022))
-    
-    if(input$stateSelector == "ALL STATES") {
-      d <- d %>% select(-county_name) %>%
-        rename(State = state_name)
-    } else {
-      d <- d %>%
-        select(-state_name) %>%
-        rename(County = county_name)
-    }
-    
-    orange_pal <- function(x) {
-      if (!is.na(x)) {
-        rgb(
-          colorRamp(
-            c("#AF2213FF", "#F0F6EBFF", "#244E57FF"))(x), 
-          maxColorValue = 255)
-      } else {
-        'grey'
-      }
-    }
-    
-    reactable(
-      d, 
-      columns = list(
-        short_desc = colDef(show = FALSE),
-        metric = colDef(show = FALSE),
-        farm_size = colDef(name = "Farm Size"),
-        Value_2017 = colDef(
-          name = "2017 Sales",
-          format = colFormat(prefix = "$", separators = TRUE, digits = 0)
-        ),
-        Value_2022 = colDef(
-          name = "2022 Sales",
-          format = colFormat(prefix = "$", separators = TRUE, digits = 0)
-        ),
-        change = colDef(
-          name = "Change",
-          format = colFormat(prefix = "$", separators = TRUE, digits = 0),
-          style = function(value) {
-            if(is.na(value)){
-              color <- 'grey85'
-            } else {
-              normalized <- (value - min(d$change, na.rm = TRUE)) / (max(d$change, na.rm = TRUE) - min(d$change, na.rm = TRUE))
-              color <- orange_pal(normalized)
-            }
-            list(background = color)
-          }
-        ),
-        change_pct = colDef(
-          name = "Change in Sales",
-          cell = function(value) {
-            if (is.na(value)) return(NA)
-            sprintf("%.2f%%", value)
-          },
-          style = function(value) {
-            if(is.na(value)){
-              color <- 'grey85'
-            } else {
-              normalized <- (value - min(d$change_pct, na.rm = TRUE)) / (max(d$change_pct, na.rm = TRUE) - min(d$change_pct, na.rm = TRUE))
-              color <- orange_pal(normalized)
-            }
-            list(background = color)
-          },
-          align = "right"
-        )
-      )
-    )  
+  output$table <- renderDataTable({
+    d()
   })
+  
+  
+  # output$table <- renderReactable({
+  #   
+  #   d <- d() %>%
+  #     st_drop_geometry() %>%
+  #     arrange(desc(Value_2022))
+  #   
+  #   if(input$stateSelector == "ALL STATES") {
+  #     d <- d %>% select(-county_name) %>%
+  #       rename(State = state_name)
+  #   } else {
+  #     d <- d %>%
+  #       select(-state_name) %>%
+  #       rename(County = county_name)
+  #   }
+  #   
+  #   orange_pal <- function(x) {
+  #     if (!is.na(x)) {
+  #       rgb(
+  #         colorRamp(
+  #           c("#AF2213FF", "#F0F6EBFF", "#244E57FF"))(x), 
+  #         maxColorValue = 255)
+  #     } else {
+  #       'grey'
+  #     }
+  #   }
+  #   
+  #   reactable(
+  #     d, 
+  #     columns = list(
+  #       short_desc = colDef(show = FALSE),
+  #       metric = colDef(show = FALSE),
+  #       farm_size = colDef(name = "Farm Size"),
+  #       Value_2017 = colDef(
+  #         name = "2017 Sales",
+  #         format = colFormat(prefix = "$", separators = TRUE, digits = 0)
+  #       ),
+  #       Value_2022 = colDef(
+  #         name = "2022 Sales",
+  #         format = colFormat(prefix = "$", separators = TRUE, digits = 0)
+  #       ),
+  #       change = colDef(
+  #         name = "Change",
+  #         format = colFormat(prefix = "$", separators = TRUE, digits = 0),
+  #         style = function(value) {
+  #           if(is.na(value)){
+  #             color <- 'grey85'
+  #           } else {
+  #             normalized <- (value - min(d$change, na.rm = TRUE)) / (max(d$change, na.rm = TRUE) - min(d$change, na.rm = TRUE))
+  #             color <- orange_pal(normalized)
+  #           }
+  #           list(background = color)
+  #         }
+  #       ),
+  #       change_pct = colDef(
+  #         name = "Change in Sales",
+  #         cell = function(value) {
+  #           if (is.na(value)) return(NA)
+  #           sprintf("%.2f%%", value)
+  #         },
+  #         style = function(value) {
+  #           if(is.na(value)){
+  #             color <- 'grey85'
+  #           } else {
+  #             normalized <- (value - min(d$change_pct, na.rm = TRUE)) / (max(d$change_pct, na.rm = TRUE) - min(d$change_pct, na.rm = TRUE))
+  #             color <- orange_pal(normalized)
+  #           }
+  #           list(background = color)
+  #         },
+  #         align = "right"
+  #       )
+  #     )
+  #   )  
+  # })
 }
